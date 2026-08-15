@@ -1,128 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Workflow Board</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23185FA5%22/><rect x=%226%22 y=%228%22 width=%228%22 height=%2216%22 rx=%222%22 fill=%22%23FFF3E6%22/><rect x=%2218%22 y=%228%22 width=%228%22 height=%2216%22 rx=%222%22 fill=%22%23E6F1FB%22/><rect x=%2210%22 y=%228%22 width=%2212%22 height=%2216%22 rx=%222%22 fill=%22white%22 opacity=%220.3%22/></svg>">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-#wb{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;padding:1.5rem;min-height:100vh}
-#wb .warn-banner{display:none;background:#FFF3E6;border:1px solid #FAC775;border-radius:10px;padding:0.75rem 0.9rem;margin-bottom:0.875rem;font-size:12.5px;color:#633806;line-height:1.6}
-#wb .warn-banner.show{display:block}
-#wb .warn-banner strong{font-weight:600}
-#wb .top-nav{display:flex;gap:8px;margin-bottom:1rem;border-bottom:1px solid #e0ddd6;padding-bottom:0.75rem;align-items:center;flex-wrap:wrap}
-#wb .brand{font-size:14px;font-weight:600;color:#1a1a1a;margin-right:6px}
-#wb .tab-btn{font-size:13px;padding:5px 16px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#666;cursor:pointer}
-#wb .tab-btn.active{background:#185FA5;color:#fff;border-color:#185FA5}
-#wb .tab-btn:hover:not(.active){background:#f0ede8}
-#wb .who-box{margin-left:auto;display:flex;align-items:center;gap:8px}
-#wb .who-box select{font-size:12px;padding:4px 9px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
-#wb .sync-status{font-size:11px;color:#999;display:flex;align-items:center;gap:5px;min-width:92px}
-#wb .sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0}
-#wb .sync-dot.ok{background:#639922}
-#wb .sync-dot.busy{background:#EF9F27}
-#wb .sync-dot.err{background:#E24B4A}
-#wb .section{display:none}
-#wb .section.active{display:block}
-#wb .toolbar{display:flex;gap:7px;margin-bottom:0.75rem;flex-wrap:wrap;align-items:center}
-#wb .toolbar input,#wb .toolbar select{font-size:13px;padding:6px 10px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
-#wb .toolbar input.grow{flex:1;min-width:150px}
-#wb .toolbar input.sm{width:75px}
-#wb .toolbar input.md{width:170px}
-#wb .toolbar button{font-size:13px;padding:6px 13px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a;cursor:pointer;white-space:nowrap}
-#wb .toolbar button:hover{background:#f0ede8}
-#wb .ghost{color:#185FA5;border-color:#B5D4F4}
-#wb .viewbar{display:flex;gap:8px;align-items:center;margin-bottom:0.875rem;flex-wrap:wrap}
-#wb .seg{display:inline-flex;border:1px solid #ccc;border-radius:8px;overflow:hidden}
-#wb .seg button{font-size:12px;padding:5px 13px;border:none;background:#fff;color:#666;cursor:pointer}
-#wb .seg button.on{background:#1a1a1a;color:#fff}
-#wb .viewbar label{font-size:12px;color:#666}
-#wb .viewbar select{font-size:12px;padding:5px 8px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
-#wb .stage-board{display:grid;gap:12px;align-items:stretch}
-#wb .col{border:1px solid #e0ddd6;border-radius:12px;padding:12px;display:flex;flex-direction:column;background:#F4F3F0;min-width:0}
-#wb .col.drag-over{outline:2px dashed #185FA5;outline-offset:-3px}
-#wb .col-header{font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:center;gap:6px;flex-shrink:0}
-#wb .cpill{font-size:11px;border-radius:99px;padding:1px 8px;background:rgba(0,0,0,0.08)}
-#wb .col-cards{flex:1;min-height:56px}
-#wb .card{background:#fff;border:1px solid #e8e6e0;border-radius:8px;padding:9px 11px;margin-bottom:8px;cursor:grab;user-select:none;border-left-width:3px}
-#wb .card:active{cursor:grabbing;opacity:0.6}
-#wb .card-name{font-size:13px;font-weight:500;color:#1a1a1a;margin-bottom:4px;line-height:1.35}
-#wb .card-dates{font-size:11px;color:#888;margin-bottom:6px}
-#wb .card-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
-#wb .tag{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid #e0ddd6;color:#666;background:#f5f5f3;white-space:nowrap}
-#wb .who-chip{font-size:11px;padding:2px 8px;border-radius:99px;font-weight:500;white-space:nowrap}
-#wb .who-none{background:#EDECE7;color:#77756E;border:1px dashed #C9C7BF}
-#wb .card-footer{display:flex;justify-content:flex-end;gap:5px;border-top:1px solid #f0ede8;padding-top:6px}
-#wb .card-footer button{font-size:11px;padding:3px 9px;border-radius:99px;border:1px solid #e0ddd6;background:#f5f5f3;color:#666;cursor:pointer}
-#wb .card-footer .edit-btn:hover{background:#EEF4FF;color:#185FA5;border-color:#B5D4F4}
-#wb .card-footer .done-btn:hover{background:#EAF3DE;color:#3B6D11;border-color:#C0DD97}
-#wb .card-footer .del-btn:hover{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
-#wb .empty-hint{font-size:11px;color:#c4c2ba;text-align:center;padding:1.5rem 0}
-#wb .swim{display:grid;gap:8px;align-items:stretch}
-#wb .swim-corner{font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:flex-end;padding-bottom:6px}
-#wb .swim-colhead{font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:0 0 6px 2px;border-bottom:2px solid #e0ddd6}
-#wb .swim-rowhead{font-size:12px;font-weight:600;color:#1a1a1a;display:flex;align-items:center;gap:7px;padding:10px 8px 10px 0;border-right:1px solid #e0ddd6}
-#wb .swim-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-#wb .swim-cell{background:#F4F3F0;border:1px solid #e8e6e0;border-radius:10px;padding:8px;min-height:64px}
-#wb .swim-cell.drag-over{outline:2px dashed #185FA5;outline-offset:-3px}
-#wb .swim-cell .card{margin-bottom:6px}
-#wb .swim-cell .card:last-child{margin-bottom:0}
-#wb .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:1rem}
-#wb .modal-bg.open{display:flex}
-#wb .modal{background:#fff;border:1px solid #ddd;border-radius:12px;padding:1.25rem;width:480px;max-width:100%;max-height:88vh;overflow-y:auto}
-#wb .modal h3{font-size:15px;font-weight:500;margin-bottom:1rem}
-#wb .modal h4{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin:1.25rem 0 0.5rem}
-#wb .modal p{font-size:12px;color:#666;margin-bottom:0.75rem;line-height:1.65}
-#wb .modal textarea{width:100%;height:140px;font-size:12px;font-family:monospace;padding:8px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;color:#1a1a1a;resize:vertical}
-#wb .field-row{display:flex;flex-direction:column;gap:4px;margin-bottom:0.75rem}
-#wb .field-row label{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:0.04em}
-#wb .field-row input,#wb .field-row select{font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;color:#1a1a1a;width:100%}
-#wb .field-row input:focus,#wb .field-row select:focus{outline:none;border-color:#185FA5;background:#fff}
-#wb .modal-actions{display:flex;gap:8px;margin-top:1rem;justify-content:flex-end}
-#wb .modal-actions button{font-size:13px;padding:6px 14px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a;cursor:pointer}
-#wb .modal-actions .primary{background:#185FA5;color:#fff;border-color:#185FA5}
-#wb .modal-actions .primary:hover{background:#0C447C}
-#wb .cfg-list{display:flex;flex-direction:column;gap:6px}
-#wb .cfg-row{display:flex;gap:6px;align-items:center}
-#wb .cfg-row input{flex:1;font-size:13px;padding:6px 9px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9}
-#wb .cfg-row .swatch{width:22px;height:22px;border-radius:6px;flex-shrink:0;border:1px solid rgba(0,0,0,0.1)}
-#wb .cfg-row button{font-size:11px;padding:4px 9px;border-radius:8px;border:1px solid #e0ddd6;background:#f5f5f3;color:#888;cursor:pointer}
-#wb .cfg-row button:hover{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
-#wb .cfg-add{font-size:12px;padding:5px 11px;border:1px dashed #ccc;border-radius:8px;background:#fff;color:#185FA5;cursor:pointer;margin-top:8px}
-#wb .drop-zone{border:2px dashed #ccc;border-radius:8px;padding:0.75rem;text-align:center;font-size:12px;color:#888;margin-bottom:0.75rem;cursor:pointer}
-#wb .drop-zone:hover{background:#f5f5f3}
-#wb .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.25rem}
-#wb .stat-card{background:#fff;border:1px solid #e8e6e0;border-radius:8px;padding:0.875rem;text-align:center}
-#wb .stat-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.04em}
-#wb .stat-val{font-size:22px;font-weight:500;color:#1a1a1a}
-#wb .filter-row{display:flex;gap:8px;margin-bottom:0.75rem;align-items:center;flex-wrap:wrap}
-#wb .filter-row label{font-size:12px;color:#666}
-#wb .filter-row select,#wb .filter-row input{font-size:12px;padding:5px 8px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
-#wb .comp-table{width:100%;border-collapse:collapse;font-size:13px}
-#wb .comp-table th{font-size:11px;font-weight:500;color:#888;text-align:left;padding:6px 10px;border-bottom:1px solid #e8e6e0;white-space:nowrap}
-#wb .comp-table td{padding:7px 10px;border-bottom:1px solid #f0ede8;vertical-align:middle}
-#wb .comp-table tr:last-child td{border-bottom:none}
-#wb .restore-btn{font-size:11px;padding:3px 10px;border:1px solid #C0DD97;border-radius:99px;background:#EAF3DE;color:#3B6D11;cursor:pointer;font-weight:500;margin-right:4px}
-#wb .comp-edit-btn{font-size:11px;padding:3px 10px;border:1px solid #B5D4F4;border-radius:99px;background:#EEF4FF;color:#185FA5;cursor:pointer}
-#wb .ctx-menu{position:fixed;z-index:200;background:#fff;border:1px solid #ddd;border-radius:10px;padding:5px;min-width:170px;box-shadow:0 8px 24px rgba(0,0,0,0.14);display:none}
-#wb .ctx-menu.open{display:block}
-#wb .ctx-menu button{display:block;width:100%;text-align:left;font-size:13px;padding:7px 11px;border:none;background:none;color:#1a1a1a;cursor:pointer;border-radius:6px}
-#wb .ctx-menu button:hover{background:#f0ede8}
-#wb .ctx-menu button.danger{color:#A32D2D}
-#wb .ctx-menu button.danger:hover{background:#FCEBEB}
-#wb .ctx-menu button:disabled{color:#c4c2ba;cursor:default}
-#wb .ctx-menu button:disabled:hover{background:none}
-#wb .ctx-sep{height:1px;background:#eee;margin:4px 0}
-#wb .ctx-hint{font-size:11px;color:#aaa;padding:4px 11px 6px}
-#wb .card.sel{outline:2px solid #185FA5;outline-offset:1px}
-#wb .rm-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:0.875rem;flex-wrap:wrap}
-#wb .rm-intro{font-size:12px;color:#888;margin:0;flex:1;min-width:220px}
-#wb .danger-btn{font-size:11px;padding:3px 10px;border:1px solid #F7C1C1;border-radius:99px;background:#FCEBEB;color:#A32D2D;cursor:pointer;font-weight:500}
-#wb .danger-btn:hover{background:#F7C1C1}
-#wb .toast{font-size:12px;color:#3B6D11;background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:7px 11px;margin-bottom:0.75rem;display:none}
-#wb .toast.show{display:block}
-#wb .empty-comp,#wb .loading{font-size:13px;color:#aaa;text-align:center;padding:3rem 0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;padding:1.5rem}
+.warn-banner{display:none;background:#FFF3E6;border:1px solid #FAC775;border-radius:10px;padding:0.75rem 0.9rem;margin-bottom:0.875rem;font-size:12.5px;color:#633806;line-height:1.6}
+.warn-banner.show{display:block}
+.warn-banner strong{font-weight:600}
+.top-nav{display:flex;gap:8px;margin-bottom:1rem;border-bottom:1px solid #e0ddd6;padding-bottom:0.75rem;align-items:center;flex-wrap:wrap}
+.brand{font-size:14px;font-weight:600;color:#1a1a1a;margin-right:6px}
+.tab-btn{font-size:13px;padding:5px 16px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#666;cursor:pointer}
+.tab-btn.active{background:#185FA5;color:#fff;border-color:#185FA5}
+.tab-btn:hover:not(.active){background:#f0ede8}
+.who-box{margin-left:auto;display:flex;align-items:center;gap:8px}
+.sync-status{font-size:11px;color:#999;display:flex;align-items:center;gap:5px;min-width:92px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0}
+.sync-dot.ok{background:#639922}
+.sync-dot.busy{background:#EF9F27}
+.sync-dot.err{background:#E24B4A}
+.section{display:none}.section.active{display:block}
+.toolbar{display:flex;gap:7px;margin-bottom:0.75rem;flex-wrap:wrap;align-items:center}
+.toolbar input,.toolbar select{font-size:13px;padding:6px 10px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
+.toolbar input.grow{flex:1;min-width:150px}
+.toolbar input.sm{width:75px}
+.toolbar input.md{width:170px}
+.toolbar button{font-size:13px;padding:6px 13px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a;cursor:pointer;white-space:nowrap}
+.toolbar button:hover{background:#f0ede8}
+.ghost{color:#185FA5;border-color:#B5D4F4}
+.viewbar{display:flex;gap:8px;align-items:center;margin-bottom:0.875rem;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid #ccc;border-radius:8px;overflow:hidden}
+.seg button{font-size:12px;padding:5px 13px;border:none;background:#fff;color:#666;cursor:pointer}
+.seg button.on{background:#1a1a1a;color:#fff}
+.viewbar label{font-size:12px;color:#666}
+.viewbar select{font-size:12px;padding:5px 8px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
+.stage-board{display:grid;gap:12px;align-items:stretch}
+.col{border:1px solid #e0ddd6;border-radius:12px;padding:12px;display:flex;flex-direction:column;background:#F4F3F0;min-width:0}
+.col.drag-over{outline:2px dashed #185FA5;outline-offset:-3px}
+.col-header{font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:center;gap:6px;flex-shrink:0}
+.cpill{font-size:11px;border-radius:99px;padding:1px 8px;background:rgba(0,0,0,0.08)}
+.col-cards{flex:1;min-height:56px}
+.card{background:#fff;border:1px solid #e8e6e0;border-radius:8px;padding:9px 11px;margin-bottom:8px;cursor:grab;user-select:none;border-left-width:3px}
+.card:active{cursor:grabbing;opacity:0.6}
+.card-name{font-size:13px;font-weight:500;color:#1a1a1a;margin-bottom:4px;line-height:1.35}
+.card-dates{font-size:11px;color:#888;margin-bottom:6px}
+.card-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid #e0ddd6;color:#666;background:#f5f5f3;white-space:nowrap}
+.who-chip{font-size:11px;padding:2px 8px;border-radius:99px;font-weight:500;white-space:nowrap}
+.who-none{background:#EDECE7;color:#77756E;border:1px dashed #C9C7BF}
+.card-footer{display:flex;justify-content:flex-end;gap:5px;border-top:1px solid #f0ede8;padding-top:6px}
+.card-footer button{font-size:11px;padding:3px 9px;border-radius:99px;border:1px solid #e0ddd6;background:#f5f5f3;color:#666;cursor:pointer}
+.card-footer .edit-btn:hover{background:#EEF4FF;color:#185FA5;border-color:#B5D4F4}
+.card-footer .done-btn:hover{background:#EAF3DE;color:#3B6D11;border-color:#C0DD97}
+.card-footer .del-btn:hover{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
+.empty-hint{font-size:11px;color:#c4c2ba;text-align:center;padding:1.5rem 0}
+.swim{display:grid;gap:8px;align-items:stretch}
+.swim-corner{font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:flex-end;padding-bottom:6px}
+.swim-colhead{font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:0 0 6px 2px;border-bottom:2px solid #e0ddd6}
+.swim-rowhead{font-size:12px;font-weight:600;color:#1a1a1a;display:flex;align-items:center;gap:7px;padding:10px 8px 10px 0;border-right:1px solid #e0ddd6}
+.swim-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.swim-cell{background:#F4F3F0;border:1px solid #e8e6e0;border-radius:10px;padding:8px;min-height:64px}
+.swim-cell.drag-over{outline:2px dashed #185FA5;outline-offset:-3px}
+.swim-cell .card{margin-bottom:6px}
+.swim-cell .card:last-child{margin-bottom:0}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border:1px solid #ddd;border-radius:12px;padding:1.25rem;width:480px;max-width:100%;max-height:88vh;overflow-y:auto}
+.modal h3{font-size:15px;font-weight:500;margin-bottom:1rem}
+.modal h4{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin:1.25rem 0 0.5rem}
+.modal p{font-size:12px;color:#666;margin-bottom:0.75rem;line-height:1.65}
+.modal textarea{width:100%;height:140px;font-size:12px;font-family:monospace;padding:8px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;color:#1a1a1a;resize:vertical}
+.field-row{display:flex;flex-direction:column;gap:4px;margin-bottom:0.75rem}
+.field-row label{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:0.04em}
+.field-row input,.field-row select{font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;color:#1a1a1a;width:100%}
+.field-row input:focus,.field-row select:focus{outline:none;border-color:#185FA5;background:#fff}
+.modal-actions{display:flex;gap:8px;margin-top:1rem;justify-content:flex-end}
+.modal-actions button{font-size:13px;padding:6px 14px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a;cursor:pointer}
+.modal-actions .primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.modal-actions .primary:hover{background:#0C447C}
+.modal-actions button:not(.primary):hover{background:#f0ede8}
+.cfg-list{display:flex;flex-direction:column;gap:6px}
+.cfg-row{display:flex;gap:6px;align-items:center}
+.cfg-row input{flex:1;font-size:13px;padding:6px 9px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9}
+.cfg-row .swatch{width:22px;height:22px;border-radius:6px;flex-shrink:0;border:1px solid rgba(0,0,0,0.1)}
+.cfg-row button{font-size:11px;padding:4px 9px;border-radius:8px;border:1px solid #e0ddd6;background:#f5f5f3;color:#888;cursor:pointer}
+.cfg-row button:hover{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
+.cfg-add{font-size:12px;padding:5px 11px;border:1px dashed #ccc;border-radius:8px;background:#fff;color:#185FA5;cursor:pointer;margin-top:8px}
+.drop-zone{border:2px dashed #ccc;border-radius:8px;padding:0.75rem;text-align:center;font-size:12px;color:#888;margin-bottom:0.75rem;cursor:pointer}
+.drop-zone:hover{background:#f5f5f3}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.25rem}
+.stat-card{background:#fff;border:1px solid #e8e6e0;border-radius:8px;padding:0.875rem;text-align:center}
+.stat-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.04em}
+.stat-val{font-size:22px;font-weight:500;color:#1a1a1a}
+.filter-row{display:flex;gap:8px;margin-bottom:0.75rem;align-items:center;flex-wrap:wrap}
+.filter-row label{font-size:12px;color:#666}
+.filter-row select,.filter-row input{font-size:12px;padding:5px 8px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
+.comp-table{width:100%;border-collapse:collapse;font-size:13px}
+.comp-table th{font-size:11px;font-weight:500;color:#888;text-align:left;padding:6px 10px;border-bottom:1px solid #e8e6e0;white-space:nowrap}
+.comp-table td{padding:7px 10px;border-bottom:1px solid #f0ede8;vertical-align:middle}
+.comp-table tr:last-child td{border-bottom:none}
+.restore-btn{font-size:11px;padding:3px 10px;border:1px solid #C0DD97;border-radius:99px;background:#EAF3DE;color:#3B6D11;cursor:pointer;font-weight:500;margin-right:4px}
+.restore-btn:hover{background:#C0DD97}
+.comp-edit-btn{font-size:11px;padding:3px 10px;border:1px solid #B5D4F4;border-radius:99px;background:#EEF4FF;color:#185FA5;cursor:pointer}
+.comp-edit-btn:hover{background:#B5D4F4}
+.ctx-menu{position:fixed;z-index:200;background:#fff;border:1px solid #ddd;border-radius:10px;padding:5px;min-width:170px;box-shadow:0 8px 24px rgba(0,0,0,0.14);display:none}
+.ctx-menu.open{display:block}
+.ctx-menu button{display:block;width:100%;text-align:left;font-size:13px;padding:7px 11px;border:none;background:none;color:#1a1a1a;cursor:pointer;border-radius:6px}
+.ctx-menu button:hover{background:#f0ede8}
+.ctx-menu button.danger{color:#A32D2D}
+.ctx-menu button.danger:hover{background:#FCEBEB}
+.ctx-menu button:disabled{color:#c4c2ba;cursor:default}
+.ctx-menu button:disabled:hover{background:none}
+.ctx-sep{height:1px;background:#eee;margin:4px 0}
+.ctx-hint{font-size:11px;color:#aaa;padding:4px 11px 6px}
+.card.sel{outline:2px solid #185FA5;outline-offset:1px}
+.rm-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:0.875rem;flex-wrap:wrap}
+.rm-intro{font-size:12px;color:#888;margin:0;flex:1;min-width:220px}
+.danger-btn{font-size:11px;padding:3px 10px;border:1px solid #F7C1C1;border-radius:99px;background:#FCEBEB;color:#A32D2D;cursor:pointer;font-weight:500}
+.danger-btn:hover{background:#F7C1C1}
+.toast{font-size:12px;color:#3B6D11;background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:7px 11px;margin-bottom:0.75rem;display:none}
+.toast.show{display:block}
+.empty-comp,.loading{font-size:13px;color:#aaa;text-align:center;padding:3rem 0}
 </style>
-
-<div id="wb">
+</head>
+<body>
+<div id="app">
   <div class="warn-banner" id="warn-banner"></div>
   <div class="toast" id="toast"></div>
   <div class="top-nav">
-    <span class="brand">Project Workflow Board</span>
+    <span class="brand">Data Workflow Board</span>
     <button class="tab-btn active" data-tab="board">Board</button>
     <button class="tab-btn" data-tab="completed">Completed</button>
     <button class="tab-btn" data-tab="removed">Removed</button>
@@ -138,7 +147,6 @@
       <select id="new-person"></select>
       <button id="add-btn">+ Add</button>
       <button class="ghost" id="open-import">Import</button>
-      <button class="ghost" id="open-backup">Backup</button>
       <button class="ghost" id="open-config">Stages &amp; people</button>
     </div>
     <div class="viewbar">
@@ -150,7 +158,7 @@
       <select id="filter-person"><option value="all">Everyone</option></select>
       <input type="text" id="filter-search" placeholder="Search projects..." style="font-size:12px;padding:5px 8px;border:1px solid #ccc;border-radius:8px;width:160px" />
     </div>
-    <div id="board"><div class="loading">Loading board…</div></div>
+    <div id="board"><div class="loading">Connecting…</div></div>
   </div>
 
   <div class="section" id="sec-completed">
@@ -172,7 +180,7 @@
 
   <div class="section" id="sec-removed">
     <div class="rm-head">
-      <p class="rm-intro">Projects taken off the board. They stay here until deleted permanently, so nothing is lost by mistake.</p>
+      <p class="rm-intro">Projects taken off the board. Nothing is deleted until you delete it here.</p>
       <button class="danger-btn" id="rm-empty" style="padding:5px 12px;font-size:12px">Delete all permanently</button>
     </div>
     <div id="rm-content"></div>
@@ -210,7 +218,7 @@
   <div class="modal-bg" id="config-modal">
     <div class="modal">
       <h3>Stages &amp; people</h3>
-      <p>Stages are the columns of your workflow, in order. People are who a project can be assigned to. Changes apply for everyone on the board.</p>
+      <p>Stages are the columns of your workflow, in order. People are who a project can be assigned to.</p>
       <h4>Workflow stages</h4>
       <div class="cfg-list" id="cfg-stages"></div>
       <button class="cfg-add" id="add-stage">+ Add stage</button>
@@ -224,37 +232,10 @@
     </div>
   </div>
 
-  <div class="modal-bg" id="backup-modal">
-    <div class="modal">
-      <h3>Backup &amp; restore</h3>
-      <p id="backup-summary"></p>
-      <h4>Save a backup</h4>
-      <p>The JSON file is a complete snapshot — projects, stages, people, and completed history. It's the one to keep if you ever need to put the board back exactly as it was. The CSV is for reading in a spreadsheet and won't restore stages or people.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="cfg-add" id="dl-json" style="margin-top:0">Download JSON backup</button>
-        <button class="cfg-add" id="dl-csv" style="margin-top:0">Download CSV</button>
-        <button class="cfg-add" id="copy-json" style="margin-top:0">Copy JSON</button>
-      </div>
-      <p id="backup-note" style="margin-top:0.6rem;display:none"></p>
-      <h4>Automatic snapshots</h4>
-      <p>Taken automatically before every change, keeping the last eight. Each one is the board as it stood just before that edit, so restoring undoes it. These live in the same storage as the board, so they cover mistakes — not a storage failure. Keep a downloaded backup too.</p>
-      <div class="cfg-list" id="snap-list"><p style="font-size:12px;color:#aaa;margin:0">Loading…</p></div>
-
-      <h4>Restore from a backup</h4>
-      <p>Drop a JSON backup or paste one below. This <strong>replaces the whole board for everyone</strong> — current projects, stages, and people are overwritten, so save a backup of where things stand first.</p>
-      <div class="drop-zone" id="restore-zone">Drop .json backup here or click to browse<input type="file" id="restore-file" accept=".json,.txt" style="display:none" /></div>
-      <textarea id="restore-area" placeholder="Or paste JSON backup contents here..."></textarea>
-      <div class="modal-actions">
-        <button id="backup-close">Close</button>
-        <button class="primary" id="restore-go" style="background:#A32D2D;border-color:#A32D2D">Replace board</button>
-      </div>
-    </div>
-  </div>
-
   <div class="modal-bg" id="import-modal">
     <div class="modal">
       <h3>Import from spreadsheet</h3>
-      <p>Drop a .csv, or copy cells from Excel / Google Sheets and paste.<br>Columns: <strong>Project name, Start date, End date, Assigned to</strong> — header row skipped. Everything lands in your first stage.</p>
+      <p>Drop a .csv, or copy cells from Excel / Google Sheets and paste.<br>Columns: <strong>Project name, Start date, End date, Assigned to</strong> — header row skipped.</p>
       <div class="drop-zone" id="drop-zone">Drop .csv here or click to browse<input type="file" id="file-input" accept=".csv,.tsv,.txt" style="display:none" /></div>
       <textarea id="paste-area" placeholder="Or paste spreadsheet cells here..."></textarea>
       <div class="modal-actions">
@@ -266,1296 +247,568 @@
 </div>
 
 <script>
-(function(){
-const KEY = 'ryc-board';
+const API_KEY = '$2a$10$Pi8PR61GPkMx1Q6cQnVYjeS9ORJlve7nQxznQ9YiM9MtziPiL58Cy';
+const BIN_NAME = 'guidant-workflow-board';
+const POLL_MS = 8000;
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const POLL_MS = 5000;
-const SNAP_KEY = 'board-snapshots';
-const SNAP_MAX = 8;
 const PALETTE = ['#185FA5','#3B6D11','#854F0B','#3C3489','#A32D2D','#0F6E56','#993556','#5F5E5A'];
-
 const DEFAULT_STAGES = [
-  {id:'s1', label:'Requested'},
-  {id:'s2', label:'In progress'},
-  {id:'s3', label:'Review'},
-  {id:'s4', label:'Ready'}
+  {id:'s1',label:'Requested'},
+  {id:'s2',label:'In progress'},
+  {id:'s3',label:'Review'},
+  {id:'s4',label:'Ready'}
 ];
 
-let cards = [], completed = [], removed = [], stages = [], people = [], nextId = 1;
-let lastRaw = null, editTarget = null, dragging = null, busy = false, ready = false;
-let viewMode = 'stage', cfgStages = [], cfgPeople = [];
+let cards=[], completed=[], removed=[], stages=[], people=[], nextId=1;
+let BIN_ID='', lastVersion=null, busy=false;
+let editTarget=null, dragging=null, viewMode='stage';
+let cfgStages=[], cfgPeople=[], selectedId=null, clip=null;
 
-function esc(s){
-  return String(s == null ? '' : s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function $(id){ return document.getElementById(id); }
-function uid(p){ return p + Math.random().toString(36).slice(2,8); }
-function setSync(state,label){
-  $('sync-dot').className = 'sync-dot' + (state ? ' ' + state : '');
-  $('sync-label').textContent = label;
-}
-function personById(id){
-  for(let i=0;i<people.length;i++) if(people[i].id === id) return people[i];
-  return null;
-}
-function personName(id){ const p = personById(id); return p ? p.name : 'Unassigned'; }
-function personColor(id){ const p = personById(id); return p ? p.color : '#B4B2A9'; }
-function stageById(id){
-  for(let i=0;i<stages.length;i++) if(stages[i].id === id) return stages[i];
-  return null;
-}
-function validStage(id){ return stageById(id) ? id : (stages[0] ? stages[0].id : ''); }
-
-/* Storage can be missing entirely (e.g. this file opened outside Claude)
-   or can hang. Either way the board must stay usable, so every call is
-   wrapped with a timeout and a hard failure flag. */
-let offline = false;
-function hasStorage(){
-  return typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function';
-}
-function withTimeout(p, ms){
-  return Promise.race([
-    p,
-    new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('timeout')); }, ms); })
-  ]);
-}
-async function sGet(key, shared){
-  if(!hasStorage()) throw new Error('no storage');
-  return await withTimeout(window.storage.get(key, shared), 6000);
-}
-async function sSet(key, val, shared){
-  if(!hasStorage()) throw new Error('no storage');
-  return await withTimeout(window.storage.set(key, val, shared), 6000);
-}
-function goOffline(msg){
-  offline = true;
-  setSync('err','Not saving');
-  const el = $('warn-banner');
-  el.innerHTML = msg;
-  el.classList.add('show');
-}
-function clearWarn(){
-  offline = false;
-  $('warn-banner').classList.remove('show');
-}
-
-function snapshot(){
-  return JSON.stringify({cards:cards, completed:completed, removed:removed, stages:stages, people:people, nextId:nextId});
-}
-function adopt(raw){
-  const d = JSON.parse(raw);
-  cards = Array.isArray(d.cards) ? d.cards : [];
-  completed = Array.isArray(d.completed) ? d.completed : [];
-  removed = Array.isArray(d.removed) ? d.removed : [];
-  stages = Array.isArray(d.stages) && d.stages.length ? d.stages : DEFAULT_STAGES.slice();
-  people = Array.isArray(d.people) ? d.people : [];
-  nextId = d.nextId || 1;
-  lastRaw = raw;
-}
-
-/* Any unhandled error used to leave a dead button and no explanation.
-   Put it on screen so a failure is diagnosable instead of invisible. */
-function showError(where, err){
-  const msg = err && (err.stack || err.message) ? (err.stack || err.message) : String(err);
-  const el = $('warn-banner');
-  if(!el) return;
-  el.innerHTML = '<strong>Something broke in the board (' + esc(where) + ').</strong><br>' +
-    '<span style="font-family:monospace;font-size:11px;white-space:pre-wrap">' + esc(msg).slice(0,400) + '</span>';
-  el.classList.add('show');
-  setSync('err','Error');
-}
-window.addEventListener('error', function(e){ showError('page', e.error || e.message); });
-window.addEventListener('unhandledrejection', function(e){ showError('async', e.reason); });
-
+function uid(p){ return p+Math.random().toString(36).slice(2,8); }
+function setSync(state,label){ $('sync-dot').className='sync-dot'+(state?' '+state:''); $('sync-label').textContent=label; }
+function personById(id){ return people.find(function(p){ return p.id===id; })||null; }
+function personName(id){ const p=personById(id); return p?p.name:'Unassigned'; }
+function personColor(id){ const p=personById(id); return p?p.color:'#B4B2A9'; }
+function stageById(id){ return stages.find(function(s){ return s.id===id; })||null; }
+function validStage(id){ return stageById(id)?id:(stages[0]?stages[0].id:''); }
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
-function stateObj(){
-  return {cards:clone(cards), completed:clone(completed), removed:clone(removed),
-          stages:clone(stages), people:clone(people), nextId:nextId};
-}
-/* Work out what this change actually did, so it can be replayed on top of
-   whatever someone else saved in the meantime instead of overwriting them. */
-function diffList(before, after){
-  const b = {}, a = {};
-  before.forEach(function(x){ b[String(x.id)] = JSON.stringify(x); });
-  after.forEach(function(x){ a[String(x.id)] = x; });
-  const upserts = [], removes = [];
-  Object.keys(a).forEach(function(id){
-    if(b[id] === undefined || b[id] !== JSON.stringify(a[id])) upserts.push(a[id]);
-  });
-  Object.keys(b).forEach(function(id){ if(a[id] === undefined) removes.push(id); });
-  return {upserts:upserts, removes:removes};
-}
-function applyDiff(base, d){
-  const out = base.filter(function(x){ return d.removes.indexOf(String(x.id)) === -1; });
-  d.upserts.forEach(function(u){
-    let hit = -1;
-    for(let i=0;i<out.length;i++){ if(String(out[i].id) === String(u.id)){ hit = i; break; } }
-    if(hit >= 0) out[hit] = u; else out.push(u);
-  });
-  return out;
-}
 
-let chain = Promise.resolve();
-
-/* Apply locally and repaint first, then sync in the background. Waiting on
-   the network before rendering made every click look like it did nothing. */
-function mutate(apply){
-  const before = stateObj();
-  apply();
-  refreshSelects();
-  redraw();
-  const after = stateObj();
-
-  if(offline || !hasStorage()) return;
-
-  const cd = diffList(before.cards, after.cards);
-  const pd = diffList(before.completed, after.completed);
-  const rd = diffList(before.removed, after.removed);
-  const cfgChanged = JSON.stringify(before.stages) !== JSON.stringify(after.stages) ||
-                     JSON.stringify(before.people) !== JSON.stringify(after.people);
-
-  chain = chain.then(function(){ return push(cd, pd, rd, cfgChanged, after, before); });
-}
-
-function satisfied(base, cd, pd, rd){
-  const ids = {};
-  (base.cards || []).forEach(function(x){ ids[String(x.id)] = 1; });
-  (base.completed || []).forEach(function(x){ ids[String(x.id)] = 1; });
-  (base.removed || []).forEach(function(x){ ids[String(x.id)] = 1; });
-  for(let i=0;i<cd.upserts.length;i++) if(!ids[String(cd.upserts[i].id)]) return false;
-  for(let i=0;i<pd.upserts.length;i++) if(!ids[String(pd.upserts[i].id)]) return false;
-  for(let i=0;i<rd.upserts.length;i++) if(!ids[String(rd.upserts[i].id)]) return false;
-  for(let i=0;i<cd.removes.length;i++){
-    if(ids[cd.removes[i]] && pd.upserts.every(function(u){ return String(u.id) !== cd.removes[i]; })) return false;
-  }
-  return true;
-}
-
-async function push(cd, pd, rd, cfgChanged, after, before){
-  busy = true;
-  setSync('busy','Saving…');
+// --- JSONBin ---
+async function jbGet(){
+  if(!BIN_ID) return null;
   try{
-    /* No compare-and-swap in the storage layer, so two people saving in the
-       same instant can both read the old state. Write, read back, and retry
-       if our change didn't survive. */
-    for(let attempt = 0; attempt < 3; attempt++){
-      let base = null;
-      try{
-        const cur = await sGet(KEY, true);
-        if(cur && cur.value) base = JSON.parse(cur.value);
-      }catch(e){}
+    const r=await fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':API_KEY}});
+    if(!r.ok) return null;
+    const j=await r.json();
+    lastVersion=j.metadata&&j.metadata.version?j.metadata.version:null;
+    return j.record||null;
+  }catch(e){ return null; }
+}
+async function jbSet(data){
+  if(!BIN_ID) return false;
+  try{
+    const r=await fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify(data)});
+    if(!r.ok) return false;
+    const j=await r.json();
+    lastVersion=j.metadata&&j.metadata.version?j.metadata.version:null;
+    return true;
+  }catch(e){ return false; }
+}
+async function jbCreate(data){
+  try{
+    const r=await fetch('https://api.jsonbin.io/v3/b',{method:'POST',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY,'X-Bin-Name':BIN_NAME},body:JSON.stringify(data)});
+    if(!r.ok) return null;
+    const j=await r.json();
+    return j.metadata&&j.metadata.id?j.metadata.id:null;
+  }catch(e){ return null; }
+}
 
-      if(base){
-        cards = applyDiff(Array.isArray(base.cards) ? base.cards : [], cd);
-        completed = applyDiff(Array.isArray(base.completed) ? base.completed : [], pd);
-        removed = applyDiff(Array.isArray(base.removed) ? base.removed : [], rd);
-        stages = cfgChanged ? after.stages : (Array.isArray(base.stages) && base.stages.length ? base.stages : after.stages);
-        people = cfgChanged ? after.people : (Array.isArray(base.people) ? base.people : after.people);
-        nextId = Math.max(after.nextId || 1, base.nextId || 1);
-      }
+function stateObj(){ return {cards:clone(cards),completed:clone(completed),removed:clone(removed),stages:clone(stages),people:clone(people),nextId:nextId}; }
+function adopt(d){
+  cards=Array.isArray(d.cards)?d.cards:[];
+  completed=Array.isArray(d.completed)?d.completed:[];
+  removed=Array.isArray(d.removed)?d.removed:[];
+  stages=Array.isArray(d.stages)&&d.stages.length?d.stages:DEFAULT_STAGES.slice();
+  people=Array.isArray(d.people)?d.people:[];
+  nextId=d.nextId||1;
+}
 
-      const raw = snapshot();
-      const res = await sSet(KEY, raw, true);
-      if(!res) throw new Error('write failed');
-      lastRaw = raw;
-
-      await new Promise(function(r){ setTimeout(r, 120 + Math.random() * 220); });
-      let check = null;
-      try{
-        const v = await sGet(KEY, true);
-        if(v && v.value) check = JSON.parse(v.value);
-      }catch(e){}
-      if(!check || satisfied(check, cd, pd, rd)){
-        if(check){ adopt(JSON.stringify(check)); }
-        break;
-      }
-    }
-
-    clearWarn();
-    setSync('ok','Synced');
-    refreshSelects();
-    redraw();
-    takeSnapshot(before);
-  }catch(e){
-    goOffline('<strong>That change was not saved.</strong> It is on your screen but has not reached anyone else, and it will be lost on reload. If you opened this as a downloaded file, shared storage only works when it runs as an artifact in Claude.');
-  }finally{
-    busy = false;
+async function init(){
+  stages=DEFAULT_STAGES.slice(); people=[]; cards=[]; completed=[]; removed=[]; nextId=1;
+  BIN_ID=localStorage.getItem('wb_bin_id')||'';
+  if(BIN_ID){
+    const d=await jbGet();
+    if(d){ adopt(d); refreshSelects(); redraw(); setSync('ok','Synced'); setInterval(poll,POLL_MS); return; }
+  }
+  // create new bin
+  const data={cards:[],completed:[],removed:[],stages:DEFAULT_STAGES.slice(),people:[],nextId:1};
+  const id=await jbCreate(data);
+  if(id){
+    BIN_ID=id; localStorage.setItem('wb_bin_id',BIN_ID);
+    adopt(data); refreshSelects(); redraw(); setSync('ok','Synced'); setInterval(poll,POLL_MS);
+  }else{
+    setSync('err','Could not connect');
+    showWarn('<strong>Could not connect to JSONBin.</strong> Check your API key or network connection.');
   }
 }
 
 async function poll(){
-  if(busy || !ready || offline) return;
+  if(busy) return;
   try{
-    const res = await sGet(KEY, true);
-    if(res && res.value && res.value !== lastRaw){
-      adopt(res.value);
-      setSync('ok','Updated');
-      refreshSelects();
-      redraw();
-    }else{
-      setSync('ok','Synced');
+    const r=await fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':API_KEY}});
+    if(!r.ok) return;
+    const j=await r.json();
+    const v=j.metadata&&j.metadata.version?j.metadata.version:null;
+    if(v&&v!==lastVersion){
+      lastVersion=v; adopt(j.record||{});
+      setSync('ok','Updated'); refreshSelects(); redraw();
     }
   }catch(e){ setSync('err','Offline'); }
 }
 
+let saveChain=Promise.resolve();
+function mutate(apply){
+  apply();
+  refreshSelects();
+  redraw();
+  saveChain=saveChain.then(save);
+}
+async function save(){
+  busy=true; setSync('busy','Saving…');
+  const ok=await jbSet({cards:cards,completed:completed,removed:removed,stages:stages,people:people,nextId:nextId});
+  if(ok){ setSync('ok','Synced'); }
+  else { setSync('err','Save failed'); showWarn('<strong>That change was not saved.</strong> Check your connection and try again.'); }
+  busy=false;
+}
+
+function showWarn(msg){ const el=$('warn-banner'); el.innerHTML=msg; el.classList.add('show'); }
+function clearWarn(){ $('warn-banner').classList.remove('show'); }
+
 function redraw(){
-  const active = document.querySelector('#wb .tab-btn.active');
-  const tab = active ? active.dataset.tab : 'board';
-  if(tab === 'completed'){ renderStats(); renderCompleted(); }
-  else if(tab === 'removed'){ renderRemoved(); }
+  const active=document.querySelector('.tab-btn.active');
+  const tab=active?active.dataset.tab:'board';
+  if(tab==='completed'){ renderStats(); renderCompleted(); }
+  else if(tab==='removed'){ renderRemoved(); }
   else renderBoard();
 }
 
-async function init(){
-  stages = DEFAULT_STAGES.slice();
-  people = []; cards = []; completed = []; removed = []; nextId = 1;
-
-  let loaded = false, failed = false;
-
-  if(!hasStorage()){
-    failed = true;
-  }else{
-    try{
-      const res = await sGet(KEY, true);
-      if(res && res.value){ adopt(res.value); loaded = true; }
-    }catch(e){
-      /* A missing key throws too, so probe with a write before giving up. */
-    }
-    if(!loaded){
-      try{
-        const raw = snapshot();
-        await sSet(KEY, raw, true);
-        lastRaw = raw;
-      }catch(e){ failed = true; }
-    }
-    }
-
-  /* Reached no matter what — a stalled or missing storage layer must never
-     leave the board in a state where the buttons silently do nothing. */
-  ready = true;
-  refreshSelects();
-  redraw();
-
-  if(failed){
-    goOffline('<strong>Not connected to shared storage.</strong> You can use the board, but nothing will save or sync and your work will be lost on reload. This usually means the file was opened outside Claude — shared storage only exists when it runs as an artifact here.');
-  }else{
-    setSync('ok','Synced');
-    setInterval(poll, POLL_MS);
-  }
-}
-
 function refreshSelects(){
-  const opts = '<option value="">Unassigned</option>' + people.map(function(p){
-    return '<option value="' + esc(p.id) + '">' + esc(p.name) + '</option>';
-  }).join('');
-
-  const keep = function(el, html){ const v = el.value; el.innerHTML = html; el.value = v; };
-
-  keep($('new-person'), opts);
-  keep($('edit-person'), opts);
-  keep($('filter-person'), '<option value="all">Everyone</option><option value="">Unassigned</option>' +
-    people.map(function(p){ return '<option value="' + esc(p.id) + '">' + esc(p.name) + '</option>'; }).join(''));
-  keep($('comp-owner'), '<option value="all">Everyone</option><option value="">Unassigned</option>' +
-    people.map(function(p){ return '<option value="' + esc(p.id) + '">' + esc(p.name) + '</option>'; }).join(''));
-  keep($('edit-stage'), stages.map(function(s){
-    return '<option value="' + esc(s.id) + '">' + esc(s.label) + '</option>';
-  }).join(''));
+  const opts='<option value="">Unassigned</option>'+people.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'; }).join('');
+  const keep=function(el,html){ if(!el) return; const v=el.value; el.innerHTML=html; el.value=v; };
+  keep($('new-person'),opts);
+  keep($('edit-person'),opts);
+  keep($('filter-person'),'<option value="all">Everyone</option><option value="">Unassigned</option>'+people.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'; }).join(''));
+  keep($('comp-owner'),'<option value="all">Everyone</option><option value="">Unassigned</option>'+people.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'; }).join(''));
+  keep($('edit-stage'),stages.map(function(s){ return '<option value="'+esc(s.id)+'">'+esc(s.label)+'</option>'; }).join(''));
 }
 
-/* ---------- card element ---------- */
-function cardEl(card, showWho){
-  const c = document.createElement('div');
-  c.className = 'card' + (String(card.id) === String(selectedId) ? ' sel' : '');
-  c.draggable = true;
-  c.dataset.cardId = card.id;
-  c.style.borderLeftColor = personColor(card.person);
-  let who = '';
+// --- card element ---
+function cardEl(card,showWho){
+  const c=document.createElement('div');
+  c.className='card'+(String(card.id)===String(selectedId)?' sel':'');
+  c.draggable=true; c.dataset.cardId=card.id;
+  c.style.borderLeftColor=personColor(card.person);
+  let who='';
   if(showWho){
-    if(card.person && personById(card.person)){
-      const col = personColor(card.person);
-      who = '<span class="who-chip" style="background:' + col + '1A;color:' + col + '">' + esc(personName(card.person)) + '</span>';
+    if(card.person&&personById(card.person)){
+      const col=personColor(card.person);
+      who='<span class="who-chip" style="background:'+col+'1A;color:'+col+'">'+esc(personName(card.person))+'</span>';
     }else{
-      who = '<span class="who-chip who-none">Unassigned</span>';
+      who='<span class="who-chip who-none">Unassigned</span>';
     }
   }
-  c.innerHTML =
-    '<div class="card-name">' + esc(card.n) + '</div>' +
-    (card.dates ? '<div class="card-dates">' + esc(card.dates) + '</div>' : '') +
-    '<div class="card-pills">' + who + '</div>' +
-    '<div class="card-footer">' +
-      '<button class="edit-btn">Edit</button>' +
-      '<button class="done-btn">Done</button>' +
-      '<button class="del-btn">Remove</button>' +
-    '</div>';
-  const id = card.id;
-  c.addEventListener('click', function(){ selectCard(id); });
-  c.addEventListener('contextmenu', function(e){
-    e.preventDefault();
-    e.stopPropagation();
-    selectCard(id);
-    showCtx(e.clientX, e.clientY, [
-      {act:'dup', label:'Duplicate', run:function(){ duplicateCard(id); }},
-      {act:'copy', label:'Copy', run:function(){ copyCard(id); }},
-      {act:'paste', label:'Paste here', disabled: !clip, run:function(){
-        const t = cardById(id);
-        pasteCard(t ? t.stage : undefined, t ? t.person : undefined);
+  c.innerHTML='<div class="card-name">'+esc(card.n)+'</div>'+(card.dates?'<div class="card-dates">'+esc(card.dates)+'</div>':'')+
+    '<div class="card-pills">'+who+'</div>'+
+    '<div class="card-footer"><button class="edit-btn">Edit</button><button class="done-btn">Done</button><button class="del-btn">Remove</button></div>';
+  const id=card.id;
+  c.addEventListener('click',function(){ selectCard(id); });
+  c.addEventListener('contextmenu',function(e){
+    e.preventDefault(); e.stopPropagation(); selectCard(id);
+    showCtx(e.clientX,e.clientY,[
+      {act:'dup',label:'Duplicate',run:function(){ duplicateCard(id); }},
+      {act:'copy',label:'Copy',run:function(){ copyCard(id); }},
+      {act:'paste',label:'Paste here',disabled:!clip,run:function(){
+        const t=cardById(id); pasteCard(t?t.stage:undefined,t?t.person:undefined);
       }},
       {sep:true},
-      {act:'edit', label:'Edit…', run:function(){ openEdit('card', id); }},
-      {act:'done', label:'Mark done', run:function(){
-        mutate(function(){
-          const t = cards.find(function(x){ return x.id == id; });
-          if(!t) return;
-          completed.push(Object.assign({}, t, {completedAt: new Date().toISOString()}));
-          cards = cards.filter(function(x){ return x.id != id; });
-        });
+      {act:'edit',label:'Edit…',run:function(){ openEdit('card',id); }},
+      {act:'done',label:'Mark done',run:function(){
+        mutate(function(){ const t=cards.find(function(x){ return x.id==id; }); if(!t) return;
+          completed.push(Object.assign({},t,{completedAt:new Date().toISOString()}));
+          cards=cards.filter(function(x){ return x.id!=id; }); });
       }},
-      {act:'rm', label:'Remove', danger:true, run:function(){
-        mutate(function(){
-          const t = cards.find(function(x){ return x.id == id; });
-          if(!t) return;
-          removed.push(Object.assign({}, t, {removedAt: new Date().toISOString()}));
-          cards = cards.filter(function(x){ return x.id != id; });
-        });
-        toast('Moved to the Removed tab.');
+      {act:'rm',label:'Remove',danger:true,run:function(){
+        mutate(function(){ const t=cards.find(function(x){ return x.id==id; }); if(!t) return;
+          removed.push(Object.assign({},t,{removedAt:new Date().toISOString()}));
+          cards=cards.filter(function(x){ return x.id!=id; }); });
+        toast('Moved to Removed tab.');
       }}
     ]);
   });
-  c.addEventListener('dragstart', function(e){ dragging = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(function(){ c.style.opacity = '0.45'; }, 0); });
-  c.addEventListener('dragend', function(){
-    c.style.opacity = '1'; dragging = null;
-    document.querySelectorAll('#wb .drag-over').forEach(function(x){ x.classList.remove('drag-over'); });
-  });
-  c.querySelector('.edit-btn').addEventListener('click', function(e){ e.stopPropagation(); openEdit('card', id); });
-  c.querySelector('.done-btn').addEventListener('click', function(e){
+  c.addEventListener('dragstart',function(e){ dragging=id; e.dataTransfer.effectAllowed='move'; setTimeout(function(){ c.style.opacity='0.45'; },0); });
+  c.addEventListener('dragend',function(){ c.style.opacity='1'; dragging=null; document.querySelectorAll('.drag-over').forEach(function(x){ x.classList.remove('drag-over'); }); });
+  c.querySelector('.edit-btn').addEventListener('click',function(e){ e.stopPropagation(); openEdit('card',id); });
+  c.querySelector('.done-btn').addEventListener('click',function(e){
     e.stopPropagation();
-    mutate(function(){
-      const t = cards.find(function(x){ return x.id == id; });
-      if(!t) return;
-      completed.push(Object.assign({}, t, {completedAt: new Date().toISOString()}));
-      cards = cards.filter(function(x){ return x.id != id; });
-    });
+    mutate(function(){ const t=cards.find(function(x){ return x.id==id; }); if(!t) return;
+      completed.push(Object.assign({},t,{completedAt:new Date().toISOString()}));
+      cards=cards.filter(function(x){ return x.id!=id; }); });
   });
-  c.querySelector('.del-btn').addEventListener('click', function(e){
+  c.querySelector('.del-btn').addEventListener('click',function(e){
     e.stopPropagation();
-    mutate(function(){
-      const t = cards.find(function(x){ return x.id == id; });
-      if(!t) return;
-      removed.push(Object.assign({}, t, {removedAt: new Date().toISOString()}));
-      cards = cards.filter(function(x){ return x.id != id; });
-    });
-    toast('Moved to the Removed tab. Nothing is deleted until you delete it there.');
+    mutate(function(){ const t=cards.find(function(x){ return x.id==id; }); if(!t) return;
+      removed.push(Object.assign({},t,{removedAt:new Date().toISOString()}));
+      cards=cards.filter(function(x){ return x.id!=id; }); });
+    toast('Moved to Removed tab.');
   });
   return c;
 }
 
-function dropTarget(el, apply){
-  el.addEventListener('dragover', function(e){ e.preventDefault(); el.classList.add('drag-over'); });
-  el.addEventListener('dragleave', function(e){ if(!el.contains(e.relatedTarget)) el.classList.remove('drag-over'); });
-  el.addEventListener('drop', function(e){
-    e.preventDefault();
-    el.classList.remove('drag-over');
-    const id = dragging;
-    dragging = null;
-    if(id == null) return;
-    mutate(function(){
-      const card = cards.find(function(c){ return c.id == id; });
-      if(card) apply(card);
-    });
+function dropTarget(el,apply){
+  el.addEventListener('dragover',function(e){ e.preventDefault(); el.classList.add('drag-over'); });
+  el.addEventListener('dragleave',function(e){ if(!el.contains(e.relatedTarget)) el.classList.remove('drag-over'); });
+  el.addEventListener('drop',function(e){
+    e.preventDefault(); el.classList.remove('drag-over');
+    const id=dragging; dragging=null; if(id==null) return;
+    mutate(function(){ const card=cards.find(function(c){ return c.id==id; }); if(card) apply(card); });
   });
 }
 
 function visibleCards(){
-  const pf = $('filter-person').value;
-  const q = $('filter-search').value.trim().toLowerCase();
+  const pf=$('filter-person').value;
+  const q=$('filter-search').value.trim().toLowerCase();
   return cards.filter(function(c){
-    if(pf !== 'all' && (c.person || '') !== pf) return false;
-    if(q && String(c.n || '').toLowerCase().indexOf(q) === -1) return false;
+    if(pf!=='all'&&(c.person||'')!==pf) return false;
+    if(q&&String(c.n||'').toLowerCase().indexOf(q)===-1) return false;
     return true;
   });
 }
 
-/* ---------- board views ---------- */
 function renderBoard(){
-  const board = $('board');
-  board.innerHTML = '';
-  if(!stages.length){
-    board.innerHTML = '<div class="empty-comp">No stages yet — add some under “Stages &amp; people”.</div>';
-    return;
-  }
-  if(viewMode === 'stage') renderStageView(board);
+  const board=$('board'); board.innerHTML='';
+  if(!stages.length){ board.innerHTML='<div class="empty-comp">No stages yet — add some under "Stages &amp; people".</div>'; return; }
+  if(viewMode==='stage') renderStageView(board);
   else renderSwimView(board);
 }
 
 function renderStageView(board){
-  const list = visibleCards();
-  const grid = document.createElement('div');
-  grid.className = 'stage-board';
-  grid.style.gridTemplateColumns = 'repeat(' + stages.length + ', minmax(0,1fr))';
-  stages.forEach(function(st, i){
-    const inCol = list.filter(function(c){ return validStage(c.stage) === st.id; });
-    const col = document.createElement('div');
-    col.className = 'col';
-    const accent = PALETTE[i % PALETTE.length];
-    col.style.borderTop = '3px solid ' + accent;
-    const hdr = document.createElement('div');
-    hdr.className = 'col-header';
-    hdr.style.color = accent;
-    hdr.innerHTML = '<span>' + esc(st.label) + '</span><span class="cpill">' + inCol.length + '</span>';
+  const list=visibleCards();
+  const grid=document.createElement('div');
+  grid.className='stage-board';
+  grid.style.gridTemplateColumns='repeat('+stages.length+', minmax(0,1fr))';
+  stages.forEach(function(st,i){
+    const inCol=list.filter(function(c){ return validStage(c.stage)===st.id; });
+    const col=document.createElement('div'); col.className='col';
+    const accent=PALETTE[i%PALETTE.length];
+    col.style.borderTop='3px solid '+accent;
+    const hdr=document.createElement('div'); hdr.className='col-header'; hdr.style.color=accent;
+    hdr.innerHTML='<span>'+esc(st.label)+'</span><span class="cpill">'+inCol.length+'</span>';
     col.appendChild(hdr);
-    const wrap = document.createElement('div');
-    wrap.className = 'col-cards';
-    if(!inCol.length){
-      const h = document.createElement('div');
-      h.className = 'empty-hint';
-      h.textContent = 'Drop here';
-      wrap.appendChild(h);
-    }
-    inCol.forEach(function(c){ wrap.appendChild(cardEl(c, true)); });
+    const wrap=document.createElement('div'); wrap.className='col-cards';
+    if(!inCol.length){ const h=document.createElement('div'); h.className='empty-hint'; h.textContent='Drop here'; wrap.appendChild(h); }
+    inCol.forEach(function(c){ wrap.appendChild(cardEl(c,true)); });
     col.appendChild(wrap);
-    dropTarget(col, function(card){ card.stage = st.id; });
-    col.addEventListener('contextmenu', function(e){
-      e.preventDefault();
-      showCtx(e.clientX, e.clientY, [
-        {hint: st.label},
-        {act:'paste', label: clip ? 'Paste “' + clip.n + '”' : 'Paste', disabled: !clip,
-         run:function(){ pasteCard(st.id, clip ? clip.person : ''); }},
-        {act:'new', label:'Add project here', run:function(){
-          const nameEl = $('new-name');
-          nameEl.focus();
-          toast('Type the name up top, then press Add.');
-        }}
-      ]);
-    });
+    dropTarget(col,function(card){ card.stage=st.id; });
     grid.appendChild(col);
   });
   board.appendChild(grid);
 }
 
 function renderSwimView(board){
-  const list = visibleCards();
-  const lanes = people.slice();
-  lanes.push({id:'', name:'Unassigned', color:'#B4B2A9'});
-
-  const grid = document.createElement('div');
-  grid.className = 'swim';
-  grid.style.gridTemplateColumns = '140px repeat(' + stages.length + ', minmax(0,1fr))';
-
-  const corner = document.createElement('div');
-  corner.className = 'swim-corner';
-  corner.textContent = 'Person / stage';
-  grid.appendChild(corner);
-
-  stages.forEach(function(st, i){
-    const h = document.createElement('div');
-    h.className = 'swim-colhead';
-    h.style.color = PALETTE[i % PALETTE.length];
-    h.textContent = st.label;
-    grid.appendChild(h);
+  const list=visibleCards();
+  const lanes=people.slice(); lanes.push({id:'',name:'Unassigned',color:'#B4B2A9'});
+  const grid=document.createElement('div'); grid.className='swim';
+  grid.style.gridTemplateColumns='140px repeat('+stages.length+', minmax(0,1fr))';
+  const corner=document.createElement('div'); corner.className='swim-corner'; corner.textContent='Person / stage'; grid.appendChild(corner);
+  stages.forEach(function(st,i){
+    const h=document.createElement('div'); h.className='swim-colhead'; h.style.color=PALETTE[i%PALETTE.length]; h.textContent=st.label; grid.appendChild(h);
   });
-
   lanes.forEach(function(person){
-    const rh = document.createElement('div');
-    rh.className = 'swim-rowhead';
-    rh.innerHTML = '<span class="swim-dot" style="background:' + (person.color || '#B4B2A9') + '"></span><span>' + esc(person.name) + '</span>';
+    const rh=document.createElement('div'); rh.className='swim-rowhead';
+    rh.innerHTML='<span class="swim-dot" style="background:'+(person.color||'#B4B2A9')+'"></span><span>'+esc(person.name)+'</span>';
     grid.appendChild(rh);
-
     stages.forEach(function(st){
-      const cell = document.createElement('div');
-      cell.className = 'swim-cell';
-      const inCell = list.filter(function(c){
-        return validStage(c.stage) === st.id && (c.person || '') === person.id;
-      });
-      inCell.forEach(function(c){ cell.appendChild(cardEl(c, false)); });
-      dropTarget(cell, function(card){ card.stage = st.id; card.person = person.id; });
-      cell.addEventListener('contextmenu', function(e){
-        e.preventDefault();
-        showCtx(e.clientX, e.clientY, [
-          {hint: person.name + ' · ' + st.label},
-          {act:'paste', label: clip ? 'Paste “' + clip.n + '”' : 'Paste', disabled: !clip,
-           run:function(){ pasteCard(st.id, person.id); }}
-        ]);
-      });
+      const cell=document.createElement('div'); cell.className='swim-cell';
+      list.filter(function(c){ return validStage(c.stage)===st.id&&(c.person||'')===person.id; })
+        .forEach(function(c){ cell.appendChild(cardEl(c,false)); });
+      dropTarget(cell,function(card){ card.stage=st.id; card.person=person.id; });
       grid.appendChild(cell);
     });
   });
-
   board.appendChild(grid);
 }
 
-/* ---------- completed ---------- */
+// --- completed ---
 function filterCompleted(){
-  const now = new Date();
-  const period = $('comp-period').value;
-  const owner = $('comp-owner').value;
-  const search = $('comp-search').value.trim().toLowerCase();
-  const monthInput = $('comp-month');
-  monthInput.style.display = period === 'custom' ? 'inline-block' : 'none';
+  const now=new Date();
+  const period=$('comp-period').value;
+  const owner=$('comp-owner').value;
+  const search=$('comp-search').value.trim().toLowerCase();
+  const mi=$('comp-month'); mi.style.display=period==='custom'?'inline-block':'none';
   return completed.filter(function(c){
-    const d = new Date(c.completedAt);
-    if(period === 'month' && !(d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear())) return false;
-    if(period === 'year' && d.getFullYear() !== now.getFullYear()) return false;
-    if(period === 'custom'){
-      const mv = monthInput.value;
-      if(mv){ const p = mv.split('-'); if(!(d.getFullYear() === +p[0] && d.getMonth() === +p[1] - 1)) return false; }
-    }
-    if(owner !== 'all' && (c.person || '') !== owner) return false;
-    if(search && String(c.n || '').toLowerCase().indexOf(search) === -1) return false;
+    const d=new Date(c.completedAt);
+    if(period==='month'&&!(d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear())) return false;
+    if(period==='year'&&d.getFullYear()!==now.getFullYear()) return false;
+    if(period==='custom'){ const mv=mi.value; if(mv){ const p=mv.split('-'); if(!(d.getFullYear()===+p[0]&&d.getMonth()===+p[1]-1)) return false; } }
+    if(owner!=='all'&&(c.person||'')!==owner) return false;
+    if(search&&String(c.n||'').toLowerCase().indexOf(search)===-1) return false;
     return true;
-  }).sort(function(a,b){ return new Date(b.completedAt) - new Date(a.completedAt); });
+  }).sort(function(a,b){ return new Date(b.completedAt)-new Date(a.completedAt); });
 }
-
 function renderStats(){
-  const f = filterCompleted();
-  let html = '<div class="stat-card"><div class="stat-label">Total</div><div class="stat-val">' + f.length + '</div></div>';
+  const f=filterCompleted();
+  let html='<div class="stat-card"><div class="stat-label">Total</div><div class="stat-val">'+f.length+'</div></div>';
   people.forEach(function(p){
-    const n = f.filter(function(c){ return (c.person || '') === p.id; }).length;
-    html += '<div class="stat-card"><div class="stat-label" style="color:' + p.color + '">' + esc(p.name) + '</div>' +
-            '<div class="stat-val" style="color:' + p.color + '">' + n + '</div></div>';
+    const n=f.filter(function(c){ return (c.person||'')===p.id; }).length;
+    html+='<div class="stat-card"><div class="stat-label" style="color:'+p.color+'">'+esc(p.name)+'</div><div class="stat-val" style="color:'+p.color+'">'+n+'</div></div>';
   });
-  const un = f.filter(function(c){ return !c.person; }).length;
-  if(un) html += '<div class="stat-card"><div class="stat-label">Unassigned</div><div class="stat-val">' + un + '</div></div>';
-  $('stats-grid').innerHTML = html;
+  const un=f.filter(function(c){ return !c.person; }).length;
+  if(un) html+='<div class="stat-card"><div class="stat-label">Unassigned</div><div class="stat-val">'+un+'</div></div>';
+  $('stats-grid').innerHTML=html;
 }
-
 function renderCompleted(){
   renderStats();
-  const filtered = filterCompleted();
-  const content = $('comp-content');
-  if(!filtered.length){
-    content.innerHTML = '<div class="empty-comp">No completed projects match this filter.</div>';
-    return;
-  }
-  const rows = filtered.map(function(c){
-    const d = new Date(c.completedAt);
-    const ds = MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
-    const col = personColor(c.person);
-    const chip = c.person && personById(c.person)
-      ? '<span class="who-chip" style="background:' + col + '1A;color:' + col + '">' + esc(personName(c.person)) + '</span>'
-      : '<span class="who-chip who-none">Unassigned</span>';
-    return '<tr><td>' + esc(c.n) + '</td><td>' + esc(c.dates || '—') + '</td>' +
-      '<td>' + chip + '</td><td>' + ds + '</td>' +
-      '<td style="white-space:nowrap"><button class="restore-btn" data-id="' + esc(c.id) + '">Undo done</button>' +
-      '<button class="comp-edit-btn" data-id="' + esc(c.id) + '">Edit</button></td></tr>';
+  const filtered=filterCompleted();
+  const content=$('comp-content');
+  if(!filtered.length){ content.innerHTML='<div class="empty-comp">No completed projects match this filter.</div>'; return; }
+  const rows=filtered.map(function(c){
+    const d=new Date(c.completedAt);
+    const ds=MONTHS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+    const col=personColor(c.person);
+    const chip=c.person&&personById(c.person)?'<span class="who-chip" style="background:'+col+'1A;color:'+col+'">'+esc(personName(c.person))+'</span>':'<span class="who-chip who-none">Unassigned</span>';
+    return '<tr><td>'+esc(c.n)+'</td><td>'+esc(c.dates||'—')+'</td><td>'+chip+'</td><td>'+ds+'</td>'+
+      '<td style="white-space:nowrap"><button class="restore-btn" data-id="'+esc(c.id)+'">Undo done</button><button class="comp-edit-btn" data-id="'+esc(c.id)+'">Edit</button></td></tr>';
   }).join('');
-  content.innerHTML = '<table class="comp-table"><thead><tr><th>Project</th><th>Dates</th><th>Assigned to</th><th>Completed</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
-
+  content.innerHTML='<table class="comp-table"><thead><tr><th>Project</th><th>Dates</th><th>Assigned to</th><th>Completed</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
   content.querySelectorAll('.restore-btn').forEach(function(b){
-    b.addEventListener('click', function(){
-      const id = b.dataset.id;
-      mutate(function(){
-        const item = completed.find(function(c){ return c.id == id; });
-        if(!item) return;
-        const copy = Object.assign({}, item);
-        delete copy.completedAt;
-        copy.stage = validStage(copy.stage);
-        cards.push(copy);
-        completed = completed.filter(function(c){ return c.id != id; });
-      });
+    b.addEventListener('click',function(){
+      const id=b.dataset.id;
+      mutate(function(){ const item=completed.find(function(c){ return c.id==id; }); if(!item) return;
+        const copy=Object.assign({},item); delete copy.completedAt; copy.stage=validStage(copy.stage);
+        cards.push(copy); completed=completed.filter(function(c){ return c.id!=id; }); });
     });
   });
   content.querySelectorAll('.comp-edit-btn').forEach(function(b){
-    b.addEventListener('click', function(){ openEdit('completed', b.dataset.id); });
+    b.addEventListener('click',function(){ openEdit('completed',b.dataset.id); });
   });
 }
 
-/* ---------- automatic snapshots ----------
-   A manual backup only helps if someone remembers to take one, and a blocked
-   download can fail without saying so. Keep recent restore points in storage
-   automatically, throttled so ordinary editing doesn't hammer the writes. */
-let snapshotsCache = [];
-
-async function loadSnapshots(){
-  try{
-    const res = await sGet(SNAP_KEY, true);
-    if(res && res.value){
-      const arr = JSON.parse(res.value);
-      if(Array.isArray(arr)) snapshotsCache = arr;
-    }
-  }catch(e){ snapshotsCache = []; }
-  return snapshotsCache;
-}
-
-/* Snapshot the board as it was BEFORE each change, so every entry is a point
-   you can undo back to. Throttling this by time was a mistake: a burst of
-   edits inside the window left the empty starting board as the only restore
-   point, so "restore" wiped the work it was supposed to protect. */
-async function takeSnapshot(state){
-  if(offline || !hasStorage() || !state) return;
-  try{
-    await loadSnapshots();
-    const entry = {
-      at: new Date().toISOString(),
-      cards: state.cards, completed: state.completed, removed: state.removed,
-      stages: state.stages, people: state.people
-    };
-    const prev = snapshotsCache[0];
-    if(prev && JSON.stringify(prev.cards) === JSON.stringify(entry.cards) &&
-       JSON.stringify(prev.completed) === JSON.stringify(entry.completed) &&
-       JSON.stringify(prev.removed) === JSON.stringify(entry.removed)) return;
-    snapshotsCache.unshift(entry);
-    snapshotsCache = snapshotsCache.slice(0, SNAP_MAX);
-    await sSet(SNAP_KEY, JSON.stringify(snapshotsCache), true);
-  }catch(e){
-    /* A safety net is never a reason to interrupt a save. */
-  }
-}
-
-function renderSnapshots(list){
-  const el = $('snap-list');
-  if(!list.length){
-    el.innerHTML = '<p style="font-size:12px;color:#aaa;margin:0">No snapshots yet — the first one is taken after your next change.</p>';
-    return;
-  }
-  el.innerHTML = list.map(function(s, i){
-    const d = new Date(s.at);
-    const counts = (s.cards || []).length + ' active, ' + (s.completed || []).length + ' completed, ' +
-                   (s.removed || []).length + ' removed';
-    return '<div class="cfg-row" style="justify-content:space-between">' +
-      '<span style="font-size:12px;flex:1">' + esc(d.toLocaleString()) + '<br>' +
-      '<span style="color:#888">' + counts + '</span></span>' +
-      '<button type="button" class="snap-restore" data-i="' + i + '" ' +
-      'style="border-color:#B5D4F4;background:#EEF4FF;color:#185FA5">Restore this</button></div>';
-  }).join('');
-
-  el.querySelectorAll('.snap-restore').forEach(function(b){
-    b.addEventListener('click', function(){
-      const snap = list[parseInt(b.dataset.i, 10)];
-      if(!snap) return;
-      askConfirm('Restore this snapshot?',
-        'This puts the board back to <strong>' + esc(new Date(snap.at).toLocaleString()) + '</strong> for everyone, ' +
-        'discarding anything changed since. A fresh snapshot of the current state is taken first, so this is reversible.',
-        'Restore snapshot',
-        async function(){
-          await takeSnapshot(stateObj());
-          closeBackup();
-          overwrite({
-            cards: snap.cards || [], completed: snap.completed || [],
-            removed: snap.removed || [],
-            stages: (snap.stages && snap.stages.length) ? snap.stages : DEFAULT_STAGES.slice(),
-            people: snap.people || []
-          });
-          toast('Board restored to ' + new Date(snap.at).toLocaleString() + '.');
-        });
-    });
-  });
-}
-
-/* ---------- clipboard, duplicate & context menu ---------- */
-let clip = null;          /* internal card clipboard */
-let selectedId = null;    /* card highlighted for keyboard copy */
-
-function cardById(id){
-  for(let i=0;i<cards.length;i++) if(String(cards[i].id) === String(id)) return cards[i];
-  return null;
-}
-function copyText(c){
-  return [c.n, c.dates || ''].filter(Boolean).join(' — ');
-}
-function copyCard(id){
-  const c = cardById(id);
-  if(!c) return;
-  clip = clone(c);
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(copyText(c)).catch(function(){});
-  }
-  toast('Copied “' + c.n + '”. Paste with Ctrl+V, or right-click a column.');
-}
-function makeCopy(src, stage, person){
-  const c = clone(src);
-  c.id = uid('c');
-  const m = c.n.match(/^(.*?)\s*\(copy(?:\s+(\d+))?\)\s*$/);
-  c.n = m ? (m[1] + ' (copy ' + ((parseInt(m[2] || '1', 10)) + 1) + ')') : (c.n + ' (copy)');
-  c.stage = validStage(stage !== undefined ? stage : c.stage);
-  if(person !== undefined) c.person = person;
-  delete c.completedAt; delete c.removedAt;
-  return c;
-}
-function duplicateCard(id){
-  const c = cardById(id);
-  if(!c) return;
-  mutate(function(){ cards.push(makeCopy(c)); });
-  toast('Duplicated.');
-}
-function pasteCard(stage, person){
-  if(!clip) return;
-  const src = clip;
-  mutate(function(){ cards.push(makeCopy(src, stage, person)); });
-  toast('Pasted.');
-}
-function selectCard(id){
-  selectedId = id;
-  document.querySelectorAll('#wb .card').forEach(function(el){
-    el.classList.toggle('sel', String(el.dataset.cardId) === String(id));
-  });
-}
-
-function hideCtx(){ $('ctx-menu').classList.remove('open'); }
-function showCtx(x, y, items){
-  const m = $('ctx-menu');
-  m.innerHTML = items.map(function(it){
-    if(it.sep) return '<div class="ctx-sep"></div>';
-    if(it.hint) return '<div class="ctx-hint">' + esc(it.hint) + '</div>';
-    return '<button type="button"' + (it.danger ? ' class="danger"' : '') +
-      (it.disabled ? ' disabled' : '') + ' data-act="' + esc(it.act) + '">' + esc(it.label) + '</button>';
-  }).join('');
-  m.classList.add('open');
-  const w = m.offsetWidth || 180, h = m.offsetHeight || 200;
-  m.style.left = Math.min(x, window.innerWidth - w - 8) + 'px';
-  m.style.top = Math.min(y, window.innerHeight - h - 8) + 'px';
-  m.querySelectorAll('button').forEach(function(b){
-    b.addEventListener('click', function(){
-      const act = b.dataset.act;
-      hideCtx();
-      const fn = items.filter(function(i){ return i.act === act; })[0];
-      if(fn && fn.run) fn.run();
-    });
-  });
-}
-
-/* Turn pasted spreadsheet text into projects — one per line, tab or comma
-   separated, so a column of names from Excel drops straight onto the board. */
-function cardsFromText(text, stage, person){
-  return text.split('\n').map(function(l){ return l.trim(); }).filter(Boolean).map(function(line){
-    const cells = line.indexOf('\t') !== -1 ? line.split('\t') : [line];
-    const name = cells[0].trim().replace(/^"|"$/g,'');
-    return {
-      id: uid('c'), n: name, dates: (cells[1] || '').trim(),
-      stage: validStage(stage), person: person || ''
-    };
-  }).filter(function(c){ return c.n; });
-}
-
-/* ---------- notices & confirmation ---------- */
-let toastTimer = null;
-function toast(msg){
-  const el = $('toast');
-  if(!el) return;
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 4000);
-}
-function notify(msg){
-  const el = $('warn-banner');
-  el.innerHTML = msg;
-  el.classList.add('show');
-}
-
-/* Native confirm() and alert() are blocked in a sandboxed frame — they return
-   false silently, which made Remove look like a dead button. */
-let confirmAction = null;
-function askConfirm(title, body, label, fn){
-  $('confirm-title').textContent = title;
-  $('confirm-body').innerHTML = body;
-  $('confirm-yes').textContent = label;
-  confirmAction = fn;
-  $('confirm-modal').classList.add('open');
-}
-function closeConfirm(){ $('confirm-modal').classList.remove('open'); confirmAction = null; }
-
-/* ---------- removed tab ---------- */
+// --- removed ---
 function renderRemoved(){
-  const content = $('rm-content');
-  const list = removed.slice().sort(function(a,b){ return new Date(b.removedAt) - new Date(a.removedAt); });
-  $('rm-empty').style.display = list.length ? 'inline-block' : 'none';
-  if(!list.length){
-    content.innerHTML = '<div class="empty-comp">Nothing removed.</div>';
-    return;
-  }
-  const rows = list.map(function(c){
-    const d = c.removedAt ? new Date(c.removedAt) : null;
-    const ds = d ? MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() : '—';
-    const col = personColor(c.person);
-    const chip = c.person && personById(c.person)
-      ? '<span class="who-chip" style="background:' + col + '1A;color:' + col + '">' + esc(personName(c.person)) + '</span>'
-      : '<span class="who-chip who-none">Unassigned</span>';
-    return '<tr><td>' + esc(c.n) + '</td><td>' + esc(c.dates || '—') + '</td><td>' + chip + '</td><td>' + ds + '</td>' +
-      '<td style="white-space:nowrap"><button class="restore-btn" data-id="' + esc(c.id) + '">Put back</button>' +
-      '<button class="danger-btn" data-id="' + esc(c.id) + '">Delete permanently</button></td></tr>';
+  const content=$('rm-content');
+  const list=removed.slice().sort(function(a,b){ return new Date(b.removedAt)-new Date(a.removedAt); });
+  $('rm-empty').style.display=list.length?'inline-block':'none';
+  if(!list.length){ content.innerHTML='<div class="empty-comp">Nothing removed.</div>'; return; }
+  const rows=list.map(function(c){
+    const d=c.removedAt?new Date(c.removedAt):null;
+    const ds=d?MONTHS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear():'—';
+    const col=personColor(c.person);
+    const chip=c.person&&personById(c.person)?'<span class="who-chip" style="background:'+col+'1A;color:'+col+'">'+esc(personName(c.person))+'</span>':'<span class="who-chip who-none">Unassigned</span>';
+    return '<tr><td>'+esc(c.n)+'</td><td>'+esc(c.dates||'—')+'</td><td>'+chip+'</td><td>'+ds+'</td>'+
+      '<td style="white-space:nowrap"><button class="restore-btn" data-id="'+esc(c.id)+'">Put back</button>'+
+      '<button class="danger-btn" data-id="'+esc(c.id)+'" style="margin-left:4px">Delete permanently</button></td></tr>';
   }).join('');
-  content.innerHTML = '<table class="comp-table"><thead><tr><th>Project</th><th>Dates</th><th>Assigned to</th><th>Removed</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
-
+  content.innerHTML='<table class="comp-table"><thead><tr><th>Project</th><th>Dates</th><th>Assigned to</th><th>Removed</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
   content.querySelectorAll('.restore-btn').forEach(function(b){
-    b.addEventListener('click', function(){
-      const id = b.dataset.id;
-      mutate(function(){
-        const item = removed.find(function(c){ return c.id == id; });
-        if(!item) return;
-        const copy = Object.assign({}, item);
-        delete copy.removedAt;
-        copy.stage = validStage(copy.stage);
-        cards.push(copy);
-        removed = removed.filter(function(c){ return c.id != id; });
-      });
+    b.addEventListener('click',function(){
+      const id=b.dataset.id;
+      mutate(function(){ const item=removed.find(function(c){ return c.id==id; }); if(!item) return;
+        const copy=Object.assign({},item); delete copy.removedAt; copy.stage=validStage(copy.stage);
+        cards.push(copy); removed=removed.filter(function(c){ return c.id!=id; }); });
       toast('Put back on the board.');
     });
   });
   content.querySelectorAll('.danger-btn').forEach(function(b){
-    b.addEventListener('click', function(){
-      const id = b.dataset.id;
-      const item = removed.find(function(c){ return c.id == id; });
-      askConfirm('Delete permanently?',
-        'This erases <strong>' + esc(item ? item.n : 'this project') + '</strong> for everyone. It cannot be undone except by restoring a backup.',
-        'Delete permanently',
-        function(){
-          mutate(function(){ removed = removed.filter(function(c){ return c.id != id; }); });
-          toast('Deleted permanently.');
-        });
-    });
-  });
-}
-
-/* ---------- backup & restore ---------- */
-function stamp(){
-  const d = new Date();
-  const p = function(n){ return (n < 10 ? '0' : '') + n; };
-  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes());
-}
-function backupJSON(){
-  return JSON.stringify({
-    format: 'project-workflow-board',
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    stages: stages,
-    people: people,
-    cards: cards,
-    completed: completed,
-    removed: removed
-  }, null, 2);
-}
-function csvCell(v){
-  const s = String(v == null ? '' : v);
-  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
-}
-function backupCSV(){
-  const rows = [['Project','Dates','Stage','Assigned to','Status','Completed']];
-  cards.forEach(function(c){
-    const st = stageById(validStage(c.stage));
-    rows.push([c.n, c.dates || '', st ? st.label : '', personName(c.person), 'Active', '']);
-  });
-  completed.forEach(function(c){
-    const d = c.completedAt ? new Date(c.completedAt) : null;
-    rows.push([c.n, c.dates || '', '', personName(c.person), 'Completed',
-      d ? MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() : '']);
-  });
-  removed.forEach(function(c){
-    const d = c.removedAt ? new Date(c.removedAt) : null;
-    rows.push([c.n, c.dates || '', '', personName(c.person), 'Removed',
-      d ? MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() : '']);
-  });
-  return rows.map(function(r){ return r.map(csvCell).join(','); }).join('\n');
-}
-/* A sandboxed frame can swallow a download without raising anything, so a
-   successful call here proves nothing. Never report the file as saved. */
-function download(text, filename, mime){
-  try{
-    const blob = new Blob([text], {type: mime});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
-    return true;
-  }catch(e){ return false; }
-}
-function backupNote(msg){
-  const el = $('backup-note');
-  el.innerHTML = msg;
-  el.style.display = 'block';
-}
-function openBackup(){
-  $('backup-summary').innerHTML = '<strong>' + cards.length + '</strong> active project' +
-    (cards.length === 1 ? '' : 's') + ', <strong>' + completed.length + '</strong> completed, ' +
-    '<strong>' + removed.length + '</strong> removed, ' +
-    stages.length + ' stage' + (stages.length === 1 ? '' : 's') + ', ' + people.length + ' ' +
-    (people.length === 1 ? 'person' : 'people') + '.';
-  $('backup-note').style.display = 'none';
-  $('restore-area').value = '';
-  $('backup-modal').classList.add('open');
-  $('snap-list').innerHTML = '<p style="font-size:12px;color:#aaa;margin:0">Loading…</p>';
-  loadSnapshots().then(renderSnapshots);
-}
-function closeBackup(){ $('backup-modal').classList.remove('open'); }
-
-/* A restore is a deliberate overwrite, so it skips the merge logic that
-   normal edits use — otherwise it would try to reconcile with what it replaces. */
-async function overwrite(next){
-  cards = next.cards; completed = next.completed;
-  removed = Array.isArray(next.removed) ? next.removed : [];
-  stages = next.stages; people = next.people;
-  refreshSelects();
-  redraw();
-  if(offline || !hasStorage()) return;
-  busy = true;
-  setSync('busy','Saving…');
-  try{
-    const raw = snapshot();
-    const res = await sSet(KEY, raw, true);
-    if(!res) throw new Error('write failed');
-    lastRaw = raw;
-    clearWarn();
-    setSync('ok','Synced');
-  }catch(e){
-    goOffline('<strong>The restore was not saved.</strong> It is on your screen but has not reached anyone else, and will be lost on reload.');
-  }finally{ busy = false; }
-}
-function doRestore(){
-  const text = $('restore-area').value.trim();
-  if(!text){ backupNote('Paste a JSON backup, or drop the file in, first.'); return; }
-  let d;
-  try{ d = JSON.parse(text); }
-  catch(e){ backupNote('That is not valid JSON — make sure the whole file was pasted.'); return; }
-  if(!d || !Array.isArray(d.cards) || !Array.isArray(d.stages)){
-    backupNote('That file is missing the projects or stages, so it is not a board backup.');
-    return;
-  }
-  const when = d.exportedAt ? new Date(d.exportedAt).toLocaleString() : 'an unknown date';
-  askConfirm('Replace the whole board?',
-    'This loads the backup from <strong>' + esc(when) + '</strong> (' + d.cards.length + ' active, ' +
-    (d.completed ? d.completed.length : 0) + ' completed) and discards everything currently on the board, for everyone.',
-    'Replace board',
-    function(){
-      closeBackup();
-      overwrite({
-        cards: d.cards,
-        completed: Array.isArray(d.completed) ? d.completed : [],
-        removed: Array.isArray(d.removed) ? d.removed : [],
-        stages: d.stages.length ? d.stages : DEFAULT_STAGES.slice(),
-        people: Array.isArray(d.people) ? d.people : []
+    b.addEventListener('click',function(){
+      const id=b.dataset.id;
+      const item=removed.find(function(c){ return c.id==id; });
+      askConfirm('Delete permanently?','This erases <strong>'+esc(item?item.n:'this project')+'</strong> for everyone. Cannot be undone.','Delete permanently',function(){
+        mutate(function(){ removed=removed.filter(function(c){ return c.id!=id; }); });
+        toast('Deleted permanently.');
       });
-      toast('Board restored from backup.');
     });
+  });
 }
 
-/* ---------- edit ---------- */
-function openEdit(type, id){
-  const item = type === 'card'
-    ? cards.find(function(c){ return c.id == id; })
-    : completed.find(function(c){ return c.id == id; });
-  if(!item) return;
-  editTarget = {type:type, id:id};
-  $('edit-name').value = item.n || '';
-  $('edit-dates').value = item.dates || '';
-  $('edit-stage').value = validStage(item.stage);
-  $('edit-person').value = item.person || '';
+// --- edit ---
+function openEdit(type,id){
+  const list=type==='card'?cards:completed;
+  const item=list.find(function(c){ return c.id==id; }); if(!item) return;
+  editTarget={type:type,id:id};
+  $('edit-name').value=item.n||''; $('edit-dates').value=item.dates||'';
+  $('edit-stage').value=validStage(item.stage); $('edit-person').value=item.person||'';
   $('edit-modal').classList.add('open');
 }
-function closeEdit(){ $('edit-modal').classList.remove('open'); editTarget = null; }
+function closeEdit(){ $('edit-modal').classList.remove('open'); editTarget=null; }
 function saveEdit(){
   if(!editTarget) return;
-  const t = editTarget;
-  const v = {
-    n: $('edit-name').value.trim(),
-    dates: $('edit-dates').value.trim(),
-    stage: $('edit-stage').value,
-    person: $('edit-person').value
-  };
+  const t=editTarget;
+  const v={n:$('edit-name').value.trim(),dates:$('edit-dates').value.trim(),stage:$('edit-stage').value,person:$('edit-person').value};
   closeEdit();
   mutate(function(){
-    const list = t.type === 'card' ? cards : completed;
-    const item = list.find(function(c){ return c.id == t.id; });
-    if(!item) return;
-    if(v.n) item.n = v.n;
-    item.dates = v.dates;
-    item.stage = v.stage;
-    item.person = v.person;
+    const list=t.type==='card'?cards:completed;
+    const item=list.find(function(c){ return c.id==t.id; }); if(!item) return;
+    if(v.n) item.n=v.n; item.dates=v.dates; item.stage=v.stage; item.person=v.person;
   });
 }
 
-/* ---------- config ---------- */
+// --- config ---
 function openConfig(){
-  cfgStages = stages.map(function(s){ return {id:s.id, label:s.label}; });
-  cfgPeople = people.map(function(p){ return {id:p.id, name:p.name, color:p.color}; });
-  renderConfig();
-  $('config-modal').classList.add('open');
+  cfgStages=stages.map(function(s){ return {id:s.id,label:s.label}; });
+  cfgPeople=people.map(function(p){ return {id:p.id,name:p.name,color:p.color}; });
+  renderConfig(); $('config-modal').classList.add('open');
 }
 function closeConfig(){ $('config-modal').classList.remove('open'); }
 function renderConfig(){
-  $('cfg-stages').innerHTML = '';
-  cfgStages.forEach(function(s, i){
-    const row = document.createElement('div');
-    row.className = 'cfg-row';
-    row.innerHTML = '<span class="swatch" style="background:' + PALETTE[i % PALETTE.length] + '"></span>' +
-      '<input type="text" value="' + esc(s.label) + '" placeholder="Stage name" />' +
-      '<button type="button">Remove</button>';
-    row.querySelector('input').addEventListener('input', function(e){ s.label = e.target.value; });
-    row.querySelector('button').addEventListener('click', function(){
-      cfgStages = cfgStages.filter(function(x){ return x !== s; });
-      renderConfig();
-    });
+  $('cfg-stages').innerHTML='';
+  cfgStages.forEach(function(s,i){
+    const row=document.createElement('div'); row.className='cfg-row';
+    row.innerHTML='<span class="swatch" style="background:'+PALETTE[i%PALETTE.length]+'"></span><input type="text" value="'+esc(s.label)+'" placeholder="Stage name" /><button type="button">Remove</button>';
+    row.querySelector('input').addEventListener('input',function(e){ s.label=e.target.value; });
+    row.querySelector('button').addEventListener('click',function(){ cfgStages=cfgStages.filter(function(x){ return x!==s; }); renderConfig(); });
     $('cfg-stages').appendChild(row);
   });
-
-  $('cfg-people').innerHTML = '';
-  cfgPeople.forEach(function(p, i){
-    const row = document.createElement('div');
-    row.className = 'cfg-row';
-    row.innerHTML = '<span class="swatch" style="background:' + (p.color || PALETTE[i % PALETTE.length]) + '"></span>' +
-      '<input type="text" value="' + esc(p.name) + '" placeholder="Name" />' +
-      '<button type="button">Remove</button>';
-    row.querySelector('input').addEventListener('input', function(e){ p.name = e.target.value; });
-    row.querySelector('button').addEventListener('click', function(){
-      cfgPeople = cfgPeople.filter(function(x){ return x !== p; });
-      renderConfig();
-    });
+  $('cfg-people').innerHTML='';
+  cfgPeople.forEach(function(p,i){
+    const row=document.createElement('div'); row.className='cfg-row';
+    row.innerHTML='<span class="swatch" style="background:'+(p.color||PALETTE[i%PALETTE.length])+'"></span><input type="text" value="'+esc(p.name)+'" placeholder="Name" /><button type="button">Remove</button>';
+    row.querySelector('input').addEventListener('input',function(e){ p.name=e.target.value; });
+    row.querySelector('button').addEventListener('click',function(){ cfgPeople=cfgPeople.filter(function(x){ return x!==p; }); renderConfig(); });
     $('cfg-people').appendChild(row);
   });
 }
 function saveConfig(){
-  const ns = cfgStages.filter(function(s){ return s.label.trim(); })
-    .map(function(s){ return {id: s.id || uid('s'), label: s.label.trim()}; });
-  if(!ns.length){ notify('Keep at least one stage — the board needs somewhere to put projects.'); return; }
-  const np = cfgPeople.filter(function(p){ return p.name.trim(); })
-    .map(function(p, i){ return {id: p.id || uid('p'), name: p.name.trim(), color: p.color || PALETTE[i % PALETTE.length]}; });
+  const ns=cfgStages.filter(function(s){ return s.label.trim(); }).map(function(s){ return {id:s.id||uid('s'),label:s.label.trim()}; });
+  if(!ns.length){ showWarn('Keep at least one stage.'); return; }
+  const np=cfgPeople.filter(function(p){ return p.name.trim(); }).map(function(p,i){ return {id:p.id||uid('p'),name:p.name.trim(),color:p.color||PALETTE[i%PALETTE.length]}; });
   closeConfig();
   mutate(function(){
-    stages = ns;
-    people = np;
-    const sIds = {}; ns.forEach(function(s){ sIds[s.id] = 1; });
-    const pIds = {}; np.forEach(function(p){ pIds[p.id] = 1; });
-    const fix = function(c){
-      if(!sIds[c.stage]) c.stage = ns[0].id;
-      if(c.person && !pIds[c.person]) c.person = '';
-    };
-    cards.forEach(fix);
-    completed.forEach(function(c){ if(c.person && !pIds[c.person]) c.person = ''; });
+    stages=ns; people=np;
+    const sIds={}; ns.forEach(function(s){ sIds[s.id]=1; });
+    const pIds={}; np.forEach(function(p){ pIds[p.id]=1; });
+    cards.forEach(function(c){ if(!sIds[c.stage]) c.stage=ns[0].id; if(c.person&&!pIds[c.person]) c.person=''; });
+    completed.forEach(function(c){ if(c.person&&!pIds[c.person]) c.person=''; });
   });
 }
 
-/* ---------- add ---------- */
+// --- add ---
 function addProject(){
-  try{
-    const nameEl = $('new-name');
-    if(!nameEl){ showError('add', new Error('project name field not found')); return; }
-    const name = nameEl.value.trim();
-    if(!name){
-      const el = $('warn-banner');
-      el.innerHTML = 'Type a project name first, then press Add.';
-      el.classList.add('show');
-      setTimeout(function(){ if(el.textContent.indexOf('Type a project name') === 0) el.classList.remove('show'); }, 2500);
-      nameEl.focus();
-      return;
-    }
-    const dates = $('new-dates').value.trim();
-    const person = $('new-person').value;
-    nameEl.value = ''; $('new-dates').value = '';
-    mutate(function(){
-      cards.push({
-        id: uid('c'), n: name, dates: dates,
-        stage: stages[0] ? stages[0].id : '', person: person
-      });
-    });
-  }catch(err){
-    showError('add', err);
-  }
+  const nameEl=$('new-name'); if(!nameEl) return;
+  const name=nameEl.value.trim(); if(!name){ nameEl.focus(); return; }
+  const dates=$('new-dates').value.trim();
+  const person=$('new-person').value;
+  nameEl.value=''; $('new-dates').value='';
+  mutate(function(){ cards.push({id:uid('c'),n:name,dates:dates,stage:stages[0]?stages[0].id:'',person:person}); });
 }
 
-/* ---------- import ---------- */
+// --- import ---
 function parseRows(text){
-  const lines = text.trim().split('\n').filter(function(l){ return l.trim(); });
-  const byName = {};
-  people.forEach(function(p){ byName[p.name.toLowerCase()] = p.id; });
-  const out = [];
+  const lines=text.trim().split('\n').filter(function(l){ return l.trim(); });
+  const byName={}; people.forEach(function(p){ byName[p.name.toLowerCase()]=p.id; });
+  const out=[];
   lines.forEach(function(line){
-    const cells = line.indexOf('\t') !== -1 ? line.split('\t') : line.split(',');
-    const clean = cells.map(function(c){ return c.trim().replace(/^"|"$/g,''); });
-    const name = clean[0];
-    if(!name || /^(project|name|title)/i.test(name)) return;
-    const start = clean[1] || '', end = clean[2] || '';
-    const dates = start && end ? start + ' – ' + end : start || end || '';
-    out.push({
-      n: name, dates: dates,
-      person: byName[(clean[3] || '').toLowerCase()] || ''
-    });
+    const cells=line.indexOf('\t')!==-1?line.split('\t'):line.split(',');
+    const clean=cells.map(function(c){ return c.trim().replace(/^"|"$/g,''); });
+    const name=clean[0]; if(!name||/^(project|name|title)/i.test(name)) return;
+    const start=clean[1]||'',end=clean[2]||'';
+    const dates=start&&end?start+' – '+end:start||end||'';
+    out.push({n:name,dates:dates,person:byName[(clean[3]||'').toLowerCase()]||''});
   });
   return out;
 }
 function doImport(){
-  const text = $('paste-area').value;
-  if(!text.trim()){ closeImport(); return; }
-  const rows = parseRows(text);
-  closeImport();
-  if(!rows.length){ notify('Nothing to import — no rows matched the expected columns.'); return; }
-  mutate(function(){
-    const first = stages[0] ? stages[0].id : '';
-    rows.forEach(function(r){ cards.push(Object.assign({id: uid('c'), stage: first}, r)); });
-  });
-  toast('Imported ' + rows.length + ' project' + (rows.length === 1 ? '' : 's') + '.');
+  const text=$('paste-area').value; if(!text.trim()){ closeImport(); return; }
+  const rows=parseRows(text); closeImport();
+  if(!rows.length){ showWarn('Nothing to import — no rows matched.'); return; }
+  mutate(function(){ const first=stages[0]?stages[0].id:''; rows.forEach(function(r){ cards.push(Object.assign({id:uid('c'),stage:first},r)); }); });
+  toast('Imported '+rows.length+' project'+(rows.length===1?'':'s')+'.');
 }
 function openImport(){ $('import-modal').classList.add('open'); }
-function closeImport(){ $('import-modal').classList.remove('open'); $('paste-area').value = ''; }
-function readFile(file){
-  if(!file) return;
-  const r = new FileReader();
-  r.onload = function(ev){ $('paste-area').value = ev.target.result; };
-  r.readAsText(file);
+function closeImport(){ $('import-modal').classList.remove('open'); $('paste-area').value=''; }
+function readFile(file){ if(!file) return; const r=new FileReader(); r.onload=function(ev){ $('paste-area').value=ev.target.result; }; r.readAsText(file); }
+
+// --- clipboard & context menu ---
+function cardById(id){ return cards.find(function(c){ return String(c.id)===String(id); })||null; }
+function copyCard(id){ const c=cardById(id); if(!c) return; clip=clone(c); toast('Copied "'+c.n+'".'); }
+function makeCopy(src,stage,person){
+  const c=clone(src); c.id=uid('c');
+  const m=c.n.match(/^(.*?)\s*\(copy(?:\s+(\d+))?\)\s*$/);
+  c.n=m?(m[1]+' (copy '+((parseInt(m[2]||'1',10))+1)+')'):(c.n+' (copy)');
+  c.stage=validStage(stage!==undefined?stage:c.stage);
+  if(person!==undefined) c.person=person;
+  delete c.completedAt; delete c.removedAt; return c;
+}
+function duplicateCard(id){ const c=cardById(id); if(!c) return; mutate(function(){ cards.push(makeCopy(c)); }); toast('Duplicated.'); }
+function pasteCard(stage,person){ if(!clip) return; mutate(function(){ cards.push(makeCopy(clip,stage,person)); }); toast('Pasted.'); }
+function selectCard(id){ selectedId=id; document.querySelectorAll('.card').forEach(function(el){ el.classList.toggle('sel',String(el.dataset.cardId)===String(id)); }); }
+function hideCtx(){ $('ctx-menu').classList.remove('open'); }
+function showCtx(x,y,items){
+  const m=$('ctx-menu');
+  m.innerHTML=items.map(function(it){
+    if(it.sep) return '<div class="ctx-sep"></div>';
+    if(it.hint) return '<div class="ctx-hint">'+esc(it.hint)+'</div>';
+    return '<button type="button"'+(it.danger?' class="danger"':'')+(it.disabled?' disabled':'')+' data-act="'+esc(it.act)+'">'+esc(it.label)+'</button>';
+  }).join('');
+  m.classList.add('open');
+  const w=m.offsetWidth||180,h=m.offsetHeight||200;
+  m.style.left=Math.min(x,window.innerWidth-w-8)+'px';
+  m.style.top=Math.min(y,window.innerHeight-h-8)+'px';
+  m.querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click',function(){ const act=b.dataset.act; hideCtx(); const fn=items.find(function(i){ return i.act===act; }); if(fn&&fn.run) fn.run(); });
+  });
 }
 
-/* ---------- wiring ---------- */
-document.querySelectorAll('#wb .tab-btn').forEach(function(b){
-  b.addEventListener('click', function(){
-    const t = b.dataset.tab;
-    document.querySelectorAll('#wb .tab-btn').forEach(function(x){ x.classList.toggle('active', x === b); });
-    ['board','completed','removed'].forEach(function(id){ $('sec-' + id).classList.toggle('active', id === t); });
+// --- confirm modal ---
+let confirmAction=null;
+function askConfirm(title,body,label,fn){
+  $('confirm-title').textContent=title; $('confirm-body').innerHTML=body; $('confirm-yes').textContent=label;
+  confirmAction=fn; $('confirm-modal').classList.add('open');
+}
+function closeConfirm(){ $('confirm-modal').classList.remove('open'); confirmAction=null; }
+
+// --- toast ---
+let toastTimer=null;
+function toast(msg){ const el=$('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(function(){ el.classList.remove('show'); },4000); }
+
+// --- wiring ---
+document.querySelectorAll('.tab-btn').forEach(function(b){
+  b.addEventListener('click',function(){
+    const t=b.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(function(x){ x.classList.toggle('active',x===b); });
+    ['board','completed','removed'].forEach(function(id){ $('sec-'+id).classList.toggle('active',id===t); });
     redraw();
   });
 });
-$('view-stage').addEventListener('click', function(){
-  viewMode = 'stage';
-  $('view-stage').classList.add('on'); $('view-swim').classList.remove('on');
-  renderBoard();
-});
-$('view-swim').addEventListener('click', function(){
-  viewMode = 'swim';
-  $('view-swim').classList.add('on'); $('view-stage').classList.remove('on');
-  renderBoard();
-});
-$('add-btn').addEventListener('click', addProject);
-$('new-name').addEventListener('keydown', function(e){ if(e.key === 'Enter') addProject(); });
-$('filter-person').addEventListener('change', renderBoard);
-$('filter-search').addEventListener('input', renderBoard);
-$('edit-cancel').addEventListener('click', closeEdit);
-$('edit-save').addEventListener('click', saveEdit);
-$('open-config').addEventListener('click', openConfig);
-$('config-cancel').addEventListener('click', closeConfig);
-$('config-save').addEventListener('click', saveConfig);
-$('add-stage').addEventListener('click', function(){ cfgStages.push({id:'', label:''}); renderConfig(); });
-$('add-person').addEventListener('click', function(){ cfgPeople.push({id:'', name:'', color:PALETTE[cfgPeople.length % PALETTE.length]}); renderConfig(); });
-$('open-backup').addEventListener('click', openBackup);
-$('backup-close').addEventListener('click', closeBackup);
-$('dl-json').addEventListener('click', function(){
-  const text = backupJSON();
-  const name = 'workflow-board-backup-' + stamp() + '.json';
-  download(text, name, 'application/json');
-  $('restore-area').value = text;
-  backupNote('Tried to download <strong>' + name + '</strong>. <strong>Check your downloads folder before relying on it</strong> — this frame can block downloads without any error. If no file arrived, the full backup is in the box below: click in it, select all, and copy it into a file.');
-});
-$('dl-csv').addEventListener('click', function(){
-  const text = backupCSV();
-  const name = 'workflow-board-' + stamp() + '.csv';
-  download(text, name, 'text/csv');
-  $('restore-area').value = text;
-  backupNote('Tried to download <strong>' + name + '</strong>. <strong>Check your downloads folder</strong> — if nothing arrived, the CSV is in the box below to copy out manually.');
-});
-$('copy-json').addEventListener('click', function(){
-  const text = backupJSON();
-  const done = function(){ backupNote('Backup copied to the clipboard.'); };
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(done, function(){
-      $('restore-area').value = text;
-      backupNote('Could not reach the clipboard — the backup is in the box below.');
-    });
-  }else{
-    $('restore-area').value = text;
-    backupNote('Clipboard unavailable — the backup is in the box below.');
-  }
-});
-$('restore-go').addEventListener('click', doRestore);
-$('restore-zone').addEventListener('click', function(){ $('restore-file').click(); });
-$('restore-file').addEventListener('change', function(e){
-  const f = e.target.files[0];
-  if(!f) return;
-  const r = new FileReader();
-  r.onload = function(ev){ $('restore-area').value = ev.target.result; };
-  r.readAsText(f);
-});
-const rz = $('restore-zone');
-rz.addEventListener('dragover', function(e){ e.preventDefault(); rz.style.background = '#f0ede8'; });
-rz.addEventListener('dragleave', function(){ rz.style.background = ''; });
-rz.addEventListener('drop', function(e){
-  e.preventDefault(); rz.style.background = '';
-  const f = e.dataTransfer.files[0];
-  if(!f) return;
-  const r = new FileReader();
-  r.onload = function(ev){ $('restore-area').value = ev.target.result; };
-  r.readAsText(f);
-});
-$('rm-empty').addEventListener('click', function(){
+$('view-stage').addEventListener('click',function(){ viewMode='stage'; $('view-stage').classList.add('on'); $('view-swim').classList.remove('on'); renderBoard(); });
+$('view-swim').addEventListener('click',function(){ viewMode='swim'; $('view-swim').classList.add('on'); $('view-stage').classList.remove('on'); renderBoard(); });
+$('add-btn').addEventListener('click',addProject);
+$('new-name').addEventListener('keydown',function(e){ if(e.key==='Enter') addProject(); });
+$('filter-person').addEventListener('change',renderBoard);
+$('filter-search').addEventListener('input',renderBoard);
+$('edit-cancel').addEventListener('click',closeEdit);
+$('edit-save').addEventListener('click',saveEdit);
+$('open-config').addEventListener('click',openConfig);
+$('config-cancel').addEventListener('click',closeConfig);
+$('config-save').addEventListener('click',saveConfig);
+$('add-stage').addEventListener('click',function(){ cfgStages.push({id:'',label:''}); renderConfig(); });
+$('add-person').addEventListener('click',function(){ cfgPeople.push({id:'',name:'',color:PALETTE[cfgPeople.length%PALETTE.length]}); renderConfig(); });
+$('open-import').addEventListener('click',openImport);
+$('import-cancel').addEventListener('click',closeImport);
+$('import-go').addEventListener('click',doImport);
+$('drop-zone').addEventListener('click',function(){ $('file-input').click(); });
+$('file-input').addEventListener('change',function(e){ readFile(e.target.files[0]); });
+['comp-period','comp-owner','comp-month'].forEach(function(id){ $(id).addEventListener('change',renderCompleted); });
+$('comp-search').addEventListener('input',renderCompleted);
+$('rm-empty').addEventListener('click',function(){
   if(!removed.length) return;
-  askConfirm('Delete all removed projects?',
-    'This erases all <strong>' + removed.length + '</strong> removed project' + (removed.length === 1 ? '' : 's') +
-    ' for everyone. It cannot be undone except by restoring a snapshot or backup.',
-    'Delete all permanently',
-    function(){
-      const n = removed.length;
-      mutate(function(){ removed = []; });
-      toast('Deleted ' + n + ' project' + (n === 1 ? '' : 's') + ' permanently.');
-    });
+  askConfirm('Delete all removed projects?','This erases all <strong>'+removed.length+'</strong> removed projects for everyone. Cannot be undone.','Delete all permanently',function(){
+    const n=removed.length; mutate(function(){ removed=[]; }); toast('Deleted '+n+' projects permanently.');
+  });
 });
-
-/* Right-click menu closes on any click, scroll, or Escape. */
-document.addEventListener('click', function(e){
-  if(!$('ctx-menu').contains(e.target)) hideCtx();
+$('confirm-no').addEventListener('click',closeConfirm);
+$('confirm-yes').addEventListener('click',function(){ const fn=confirmAction; closeConfirm(); if(fn) fn(); });
+document.addEventListener('click',function(e){ if(!$('ctx-menu').contains(e.target)) hideCtx(); });
+document.addEventListener('scroll',hideCtx,true);
+window.addEventListener('blur',hideCtx);
+$('confirm-modal').addEventListener('click',function(e){ if(e.target===$('confirm-modal')) closeConfirm(); });
+$('edit-modal').addEventListener('click',function(e){ if(e.target===$('edit-modal')) closeEdit(); });
+$('config-modal').addEventListener('click',function(e){ if(e.target===$('config-modal')) closeConfig(); });
+$('import-modal').addEventListener('click',function(e){ if(e.target===$('import-modal')) closeImport(); });
+const dz=$('drop-zone');
+dz.addEventListener('dragover',function(e){ e.preventDefault(); dz.style.background='#f0ede8'; });
+dz.addEventListener('dragleave',function(){ dz.style.background=''; });
+dz.addEventListener('drop',function(e){ e.preventDefault(); dz.style.background=''; readFile(e.dataTransfer.files[0]); });
+document.addEventListener('keydown',function(e){
+  if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')) return;
+  if(e.key==='Escape'){ closeEdit(); closeConfig(); closeImport(); closeConfirm(); hideCtx(); }
+  const meta=e.ctrlKey||e.metaKey;
+  if(meta&&(e.key==='c'||e.key==='C')&&selectedId){ copyCard(selectedId); e.preventDefault(); }
+  if(meta&&(e.key==='d'||e.key==='D')&&selectedId){ duplicateCard(selectedId); e.preventDefault(); }
 });
-document.addEventListener('scroll', hideCtx, true);
-window.addEventListener('blur', hideCtx);
-document.addEventListener('contextmenu', function(e){
-  if(!e.target.closest || !e.target.closest('#wb .card, #wb .col, #wb .swim-cell')) hideCtx();
-});
-
-function typingInField(t){
-  return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT');
-}
-
-document.addEventListener('keydown', function(e){
-  if(typingInField(e.target)) return;
-  const meta = e.ctrlKey || e.metaKey;
-  if(meta && (e.key === 'c' || e.key === 'C')){
-    if(selectedId){ copyCard(selectedId); e.preventDefault(); }
-  }else if(meta && (e.key === 'd' || e.key === 'D')){
-    if(selectedId){ duplicateCard(selectedId); e.preventDefault(); }
-  }else if(meta && (e.key === 'v' || e.key === 'V')){
-    /* If the paste event doesn't reach us, fall back to the internal copy. */
-    if(clip && !navigator.clipboard) { pasteCard(); e.preventDefault(); }
-  }
-});
-
-/* Real paste: text from a spreadsheet becomes one project per line. */
-document.addEventListener('paste', function(e){
-  if(typingInField(e.target)) return;
-  const text = (e.clipboardData || window.clipboardData) ? (e.clipboardData || window.clipboardData).getData('text') : '';
-  if(text && text.trim()){
-    const made = cardsFromText(text, stages[0] ? stages[0].id : '', '');
-    if(made.length){
-      e.preventDefault();
-      mutate(function(){ made.forEach(function(c){ cards.push(c); }); });
-      toast('Pasted ' + made.length + ' project' + (made.length === 1 ? '' : 's') + ' into ' +
-            (stages[0] ? stages[0].label : 'the first stage') + '.');
-      return;
-    }
-  }
-  if(clip){ e.preventDefault(); pasteCard(); }
-});
-
-$('confirm-no').addEventListener('click', closeConfirm);
-$('confirm-yes').addEventListener('click', function(){
-  const fn = confirmAction;
-  closeConfirm();
-  if(fn) fn();
-});
-$('confirm-modal').addEventListener('click', function(e){ if(e.target === $('confirm-modal')) closeConfirm(); });
-$('backup-modal').addEventListener('click', function(e){ if(e.target === $('backup-modal')) closeBackup(); });
-$('open-import').addEventListener('click', openImport);
-$('import-cancel').addEventListener('click', closeImport);
-$('import-go').addEventListener('click', doImport);
-$('drop-zone').addEventListener('click', function(){ $('file-input').click(); });
-$('file-input').addEventListener('change', function(e){ readFile(e.target.files[0]); });
-['comp-period','comp-owner','comp-month'].forEach(function(id){ $(id).addEventListener('change', renderCompleted); });
-$('comp-search').addEventListener('input', renderCompleted);
-const dz = $('drop-zone');
-dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.style.background = '#f0ede8'; });
-dz.addEventListener('dragleave', function(){ dz.style.background = ''; });
-dz.addEventListener('drop', function(e){ e.preventDefault(); dz.style.background = ''; readFile(e.dataTransfer.files[0]); });
-$('edit-modal').addEventListener('click', function(e){ if(e.target === $('edit-modal')) closeEdit(); });
-$('config-modal').addEventListener('click', function(e){ if(e.target === $('config-modal')) closeConfig(); });
-$('import-modal').addEventListener('click', function(e){ if(e.target === $('import-modal')) closeImport(); });
-document.addEventListener('keydown', function(e){ if(e.key === 'Escape'){ closeEdit(); closeConfig(); closeImport(); closeBackup(); closeConfirm(); hideCtx(); } });
 
 init();
-})();
 </script>
+</body>
+</html>
