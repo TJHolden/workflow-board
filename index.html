@@ -123,6 +123,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .danger-btn:hover{background:#F7C1C1}
 .toast{font-size:12px;color:#3B6D11;background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:7px 11px;margin-bottom:0.75rem;display:none}
 .toast.show{display:block}
+.card.ghost{visibility:hidden;pointer-events:none}
+.who-picker{display:flex;flex-wrap:wrap;gap:5px;padding:6px 4px}
+.who-opt{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 9px;border:1px solid #ddd;border-radius:99px;background:#f9f9f9;cursor:pointer;user-select:none}
+.who-opt input{margin:0;cursor:pointer}
+.who-opt.on{border-color:#185FA5;background:#EEF4FF;color:#185FA5;font-weight:500}
+.who-empty{font-size:12px;color:#aaa;padding:4px}
 .empty-comp,.loading{font-size:13px;color:#aaa;text-align:center;padding:3rem 0}
 </style>
 </head>
@@ -147,6 +153,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <select id="new-person"></select>
       <button id="add-btn">+ Add</button>
       <button class="ghost" id="open-import">Import</button>
+      <button class="ghost" id="open-export">Download</button>
       <button class="ghost" id="open-config">Stages &amp; people</button>
     </div>
     <div class="viewbar">
@@ -206,7 +213,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="field-row"><label>Dates</label><input type="text" id="edit-dates" /></div>
       <div style="display:flex;gap:10px">
         <div class="field-row" style="flex:1"><label>Stage</label><select id="edit-stage"></select></div>
-        <div class="field-row" style="flex:1"><label>Assigned to</label><select id="edit-person"></select></div>
+        <div class="field-row" style="flex:1"><label>Tagged people</label><div id="edit-who" class="who-picker"></div></div>
       </div>
       <div class="modal-actions">
         <button id="edit-cancel">Cancel</button>
@@ -218,7 +225,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="modal-bg" id="config-modal">
     <div class="modal">
       <h3>Stages &amp; people</h3>
-      <p>Stages are the columns of your workflow, in order. People are who a project can be assigned to.</p>
+      <p>Stages are the columns of your workflow, in order. People are who a project can be tagged with — a card can carry more than one. Email addresses are optional and only used for change notifications.</p>
       <h4>Workflow stages</h4>
       <div class="cfg-list" id="cfg-stages"></div>
       <button class="cfg-add" id="add-stage">+ Add stage</button>
@@ -232,10 +239,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
   </div>
 
+  <div class="modal-bg" id="export-modal">
+    <div class="modal">
+      <h3>Download a copy</h3>
+      <p id="export-summary"></p>
+      <h4>Spreadsheet</h4>
+      <p>A CSV you can open in Excel or Google Sheets. It reads back in through Import, so it doubles as a simple backup.</p>
+      <button class="cfg-add" id="dl-csv" style="margin-top:0">Download CSV</button>
+      <h4>Full backup</h4>
+      <p>Everything — projects, completed, removed, stages and people. This is the one to keep if you ever need to put the board back exactly as it was.</p>
+      <button class="cfg-add" id="dl-json" style="margin-top:0">Download JSON backup</button>
+      <h4>Restore from a backup</h4>
+      <p>Paste a JSON backup below to load it. This <strong>replaces the whole board for everyone</strong>, so download the current one first.</p>
+      <textarea id="restore-area" placeholder="Paste JSON backup contents here..."></textarea>
+      <div class="modal-actions">
+        <button id="export-close">Close</button>
+        <button class="primary" id="restore-go" style="background:#A32D2D;border-color:#A32D2D">Replace board</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-bg" id="import-modal">
     <div class="modal">
       <h3>Import from spreadsheet</h3>
-      <p>Drop a .csv, or copy cells from Excel / Google Sheets and paste.<br>Columns: <strong>Project name, Start date, End date, Assigned to</strong> — header row skipped.</p>
+      <p>Drop a .csv, or copy cells from Excel / Google Sheets and paste.<br>Columns: <strong>Project name, Start date, End date, Tagged people</strong> — header row skipped. Tag several people by separating names with a semicolon.</p>
       <div class="drop-zone" id="drop-zone">Drop .csv here or click to browse<input type="file" id="file-input" accept=".csv,.tsv,.txt" style="display:none" /></div>
       <textarea id="paste-area" placeholder="Or paste spreadsheet cells here..."></textarea>
       <div class="modal-actions">
@@ -249,6 +276,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 const API_KEY = '$2a$10$Pi8PR61GPkMx1Q6cQnVYjeS9ORJlve7nQxznQ9YiM9MtziPiL58Cy';
 const BIN_NAME = 'guidant-workflow-board';
+
+/* The one board everyone shares. Because this is written into the file rather
+   than read from each browser, every visitor lands on the same data. Leave it
+   blank and each person silently gets their own private copy instead. */
+const SHARED_BIN_ID = '6a90c273f5f4af5e294b9783';
+
 const POLL_MS = 8000;
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const PALETTE = ['#185FA5','#3B6D11','#854F0B','#3C3489','#A32D2D','#0F6E56','#993556','#5F5E5A'];
@@ -269,6 +302,22 @@ function $(id){ return document.getElementById(id); }
 function uid(p){ return p+Math.random().toString(36).slice(2,8); }
 function setSync(state,label){ $('sync-dot').className='sync-dot'+(state?' '+state:''); $('sync-label').textContent=label; }
 function personById(id){ return people.find(function(p){ return p.id===id; })||null; }
+/* Cards used to carry a single `person`. They now carry `who`: an array of
+   person ids. Read both so older cards keep working after the change. */
+function cardWho(c){
+  if(Array.isArray(c.who)) return c.who.filter(function(id){ return id; });
+  if(c.person) return [c.person];
+  return [];
+}
+function whoNames(c){
+  const ids=cardWho(c);
+  if(!ids.length) return 'Unassigned';
+  return ids.map(personName).join('; ');
+}
+function firstColor(c){
+  const ids=cardWho(c);
+  return ids.length?personColor(ids[0]):'#B4B2A9';
+}
 function personName(id){ const p=personById(id); return p?p.name:'Unassigned'; }
 function personColor(id){ const p=personById(id); return p?p.color:'#B4B2A9'; }
 function stageById(id){ return stages.find(function(s){ return s.id===id; })||null; }
@@ -306,10 +355,17 @@ async function jbCreate(data){
 }
 
 function stateObj(){ return {cards:clone(cards),completed:clone(completed),removed:clone(removed),stages:clone(stages),people:clone(people),nextId:nextId}; }
+function migrate(list){
+  return (Array.isArray(list)?list:[]).map(function(c){
+    if(!Array.isArray(c.who)) c.who=c.person?[c.person]:[];
+    delete c.person;
+    return c;
+  });
+}
 function adopt(d){
-  cards=Array.isArray(d.cards)?d.cards:[];
-  completed=Array.isArray(d.completed)?d.completed:[];
-  removed=Array.isArray(d.removed)?d.removed:[];
+  cards=migrate(d.cards);
+  completed=migrate(d.completed);
+  removed=migrate(d.removed);
   stages=Array.isArray(d.stages)&&d.stages.length?d.stages:DEFAULT_STAGES.slice();
   people=Array.isArray(d.people)?d.people:[];
   nextId=d.nextId||1;
@@ -317,10 +373,16 @@ function adopt(d){
 
 async function init(){
   stages=DEFAULT_STAGES.slice(); people=[]; cards=[]; completed=[]; removed=[]; nextId=1;
-  BIN_ID=localStorage.getItem('wb_bin_id')||'';
+  BIN_ID=SHARED_BIN_ID||localStorage.getItem('wb_bin_id')||'';
   if(BIN_ID){
     const d=await jbGet();
     if(d){ adopt(d); refreshSelects(); redraw(); setSync('ok','Synced'); setInterval(poll,POLL_MS); return; }
+    if(SHARED_BIN_ID){
+      setSync('err','Could not connect');
+      showWarn('<strong>Could not load the shared board.</strong> Check that the bin ID and API key are right, then reload.');
+      refreshSelects(); redraw();
+      return;
+    }
   }
   // create new bin
   const data={cards:[],completed:[],removed:[],stages:DEFAULT_STAGES.slice(),people:[],nextId:1};
@@ -378,7 +440,6 @@ function refreshSelects(){
   const opts='<option value="">Unassigned</option>'+people.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'; }).join('');
   const keep=function(el,html){ if(!el) return; const v=el.value; el.innerHTML=html; el.value=v; };
   keep($('new-person'),opts);
-  keep($('edit-person'),opts);
   keep($('filter-person'),'<option value="all">Everyone</option><option value="">Unassigned</option>'+people.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'; }).join(''));
   keep($('comp-owner'),'<option value="all">Everyone</option><option value="">Unassigned</option>'+people.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'; }).join(''));
   keep($('edit-stage'),stages.map(function(s){ return '<option value="'+esc(s.id)+'">'+esc(s.label)+'</option>'; }).join(''));
@@ -389,12 +450,15 @@ function cardEl(card,showWho){
   const c=document.createElement('div');
   c.className='card'+(String(card.id)===String(selectedId)?' sel':'');
   c.draggable=true; c.dataset.cardId=card.id;
-  c.style.borderLeftColor=personColor(card.person);
+  c.style.borderLeftColor=firstColor(card);
   let who='';
   if(showWho){
-    if(card.person&&personById(card.person)){
-      const col=personColor(card.person);
-      who='<span class="who-chip" style="background:'+col+'1A;color:'+col+'">'+esc(personName(card.person))+'</span>';
+    const ids=cardWho(card).filter(function(id){ return personById(id); });
+    if(ids.length){
+      who=ids.map(function(id){
+        const col=personColor(id);
+        return '<span class="who-chip" style="background:'+col+'1A;color:'+col+'">'+esc(personName(id))+'</span>';
+      }).join('');
     }else{
       who='<span class="who-chip who-none">Unassigned</span>';
     }
@@ -410,7 +474,7 @@ function cardEl(card,showWho){
       {act:'dup',label:'Duplicate',run:function(){ duplicateCard(id); }},
       {act:'copy',label:'Copy',run:function(){ copyCard(id); }},
       {act:'paste',label:'Paste here',disabled:!clip,run:function(){
-        const t=cardById(id); pasteCard(t?t.stage:undefined,t?t.person:undefined);
+        const t=cardById(id); pasteCard(t?t.stage:undefined,t?cardWho(t):undefined);
       }},
       {sep:true},
       {act:'edit',label:'Edit…',run:function(){ openEdit('card',id); }},
@@ -460,7 +524,9 @@ function visibleCards(){
   const pf=$('filter-person').value;
   const q=$('filter-search').value.trim().toLowerCase();
   return cards.filter(function(c){
-    if(pf!=='all'&&(c.person||'')!==pf) return false;
+    const ids=cardWho(c);
+    if(pf==='' && ids.length) return false;
+    if(pf!=='all'&&pf!==''&&ids.indexOf(pf)===-1) return false;
     if(q&&String(c.n||'').toLowerCase().indexOf(q)===-1) return false;
     return true;
   });
@@ -491,6 +557,13 @@ function renderStageView(board){
     inCol.forEach(function(c){ wrap.appendChild(cardEl(c,true)); });
     col.appendChild(wrap);
     dropTarget(col,function(card){ card.stage=st.id; });
+    col.addEventListener('contextmenu',function(e){
+      e.preventDefault();
+      showCtx(e.clientX,e.clientY,[
+        {hint:st.label},
+        {act:'paste',label:clip?'Paste "'+clip.n+'"':'Paste',disabled:!clip,run:function(){ pasteCard(st.id,clip?cardWho(clip):[]); }}
+      ]);
+    });
     grid.appendChild(col);
   });
   board.appendChild(grid);
@@ -505,15 +578,53 @@ function renderSwimView(board){
   stages.forEach(function(st,i){
     const h=document.createElement('div'); h.className='swim-colhead'; h.style.color=PALETTE[i%PALETTE.length]; h.textContent=st.label; grid.appendChild(h);
   });
+  /* Every lane lays out the same cards in the same order for a given stage,
+     with untagged ones rendered invisible. That keeps a shared card on the
+     same line in every person's row so you can read across. */
+  const byStage={};
+  stages.forEach(function(st){
+    byStage[st.id]=list.filter(function(c){ return validStage(c.stage)===st.id; });
+  });
+
   lanes.forEach(function(person){
     const rh=document.createElement('div'); rh.className='swim-rowhead';
     rh.innerHTML='<span class="swim-dot" style="background:'+(person.color||'#B4B2A9')+'"></span><span>'+esc(person.name)+'</span>';
     grid.appendChild(rh);
     stages.forEach(function(st){
       const cell=document.createElement('div'); cell.className='swim-cell';
-      list.filter(function(c){ return validStage(c.stage)===st.id&&(c.person||'')===person.id; })
-        .forEach(function(c){ cell.appendChild(cardEl(c,false)); });
-      dropTarget(cell,function(card){ card.stage=st.id; card.person=person.id; });
+      /* Only pad up to this lane's last real card. Without the trim, every
+         lane would stand as tall as the busiest one, so a lane with nothing
+         in it became a column of blank space. */
+      const inStage=byStage[st.id];
+      const isMine=function(c){
+        const ids=cardWho(c);
+        return person.id===''?ids.length===0:ids.indexOf(person.id)!==-1;
+      };
+      let lastMine=-1;
+      inStage.forEach(function(c,i){ if(isMine(c)) lastMine=i; });
+      inStage.slice(0,lastMine+1).forEach(function(c){
+        const el=cardEl(c,cardWho(c).length>1);
+        if(!isMine(c)){ el.classList.add('ghost'); el.draggable=false; }
+        cell.appendChild(el);
+      });
+      /* Dropping into someone's row adds them to the card rather than
+         replacing whoever else is tagged — an accidental drag shouldn't
+         quietly untag a person and cut off their notifications. Dropping
+         into the Unassigned row clears the tags. */
+      dropTarget(cell,function(card){
+        card.stage=st.id;
+        if(!person.id){ card.who=[]; return; }
+        const w=cardWho(card);
+        if(w.indexOf(person.id)===-1) w.push(person.id);
+        card.who=w;
+      });
+      cell.addEventListener('contextmenu',function(e){
+        e.preventDefault();
+        showCtx(e.clientX,e.clientY,[
+          {hint:person.name+' · '+st.label},
+          {act:'paste',label:clip?'Paste "'+clip.n+'"':'Paste',disabled:!clip,run:function(){ pasteCard(st.id,person.id?[person.id]:[]); }}
+        ]);
+      });
       grid.appendChild(cell);
     });
   });
@@ -532,7 +643,9 @@ function filterCompleted(){
     if(period==='month'&&!(d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear())) return false;
     if(period==='year'&&d.getFullYear()!==now.getFullYear()) return false;
     if(period==='custom'){ const mv=mi.value; if(mv){ const p=mv.split('-'); if(!(d.getFullYear()===+p[0]&&d.getMonth()===+p[1]-1)) return false; } }
-    if(owner!=='all'&&(c.person||'')!==owner) return false;
+    const ids=cardWho(c);
+    if(owner===''&&ids.length) return false;
+    if(owner!=='all'&&owner!==''&&ids.indexOf(owner)===-1) return false;
     if(search&&String(c.n||'').toLowerCase().indexOf(search)===-1) return false;
     return true;
   }).sort(function(a,b){ return new Date(b.completedAt)-new Date(a.completedAt); });
@@ -541,10 +654,10 @@ function renderStats(){
   const f=filterCompleted();
   let html='<div class="stat-card"><div class="stat-label">Total</div><div class="stat-val">'+f.length+'</div></div>';
   people.forEach(function(p){
-    const n=f.filter(function(c){ return (c.person||'')===p.id; }).length;
+    const n=f.filter(function(c){ return cardWho(c).indexOf(p.id)!==-1; }).length;
     html+='<div class="stat-card"><div class="stat-label" style="color:'+p.color+'">'+esc(p.name)+'</div><div class="stat-val" style="color:'+p.color+'">'+n+'</div></div>';
   });
-  const un=f.filter(function(c){ return !c.person; }).length;
+  const un=f.filter(function(c){ return cardWho(c).length===0; }).length;
   if(un) html+='<div class="stat-card"><div class="stat-label">Unassigned</div><div class="stat-val">'+un+'</div></div>';
   $('stats-grid').innerHTML=html;
 }
@@ -556,8 +669,11 @@ function renderCompleted(){
   const rows=filtered.map(function(c){
     const d=new Date(c.completedAt);
     const ds=MONTHS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
-    const col=personColor(c.person);
-    const chip=c.person&&personById(c.person)?'<span class="who-chip" style="background:'+col+'1A;color:'+col+'">'+esc(personName(c.person))+'</span>':'<span class="who-chip who-none">Unassigned</span>';
+    const ids=cardWho(c).filter(function(id){ return personById(id); });
+    const chip=ids.length?ids.map(function(id){
+      const col=personColor(id);
+      return '<span class="who-chip" style="background:'+col+'1A;color:'+col+'">'+esc(personName(id))+'</span>';
+    }).join(' '):'<span class="who-chip who-none">Unassigned</span>';
     return '<tr><td>'+esc(c.n)+'</td><td>'+esc(c.dates||'—')+'</td><td>'+chip+'</td><td>'+ds+'</td>'+
       '<td style="white-space:nowrap"><button class="restore-btn" data-id="'+esc(c.id)+'">Undo done</button><button class="comp-edit-btn" data-id="'+esc(c.id)+'">Edit</button></td></tr>';
   }).join('');
@@ -584,8 +700,11 @@ function renderRemoved(){
   const rows=list.map(function(c){
     const d=c.removedAt?new Date(c.removedAt):null;
     const ds=d?MONTHS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear():'—';
-    const col=personColor(c.person);
-    const chip=c.person&&personById(c.person)?'<span class="who-chip" style="background:'+col+'1A;color:'+col+'">'+esc(personName(c.person))+'</span>':'<span class="who-chip who-none">Unassigned</span>';
+    const ids=cardWho(c).filter(function(id){ return personById(id); });
+    const chip=ids.length?ids.map(function(id){
+      const col=personColor(id);
+      return '<span class="who-chip" style="background:'+col+'1A;color:'+col+'">'+esc(personName(id))+'</span>';
+    }).join(' '):'<span class="who-chip who-none">Unassigned</span>';
     return '<tr><td>'+esc(c.n)+'</td><td>'+esc(c.dates||'—')+'</td><td>'+chip+'</td><td>'+ds+'</td>'+
       '<td style="white-space:nowrap"><button class="restore-btn" data-id="'+esc(c.id)+'">Put back</button>'+
       '<button class="danger-btn" data-id="'+esc(c.id)+'" style="margin-left:4px">Delete permanently</button></td></tr>';
@@ -618,26 +737,51 @@ function openEdit(type,id){
   const item=list.find(function(c){ return c.id==id; }); if(!item) return;
   editTarget={type:type,id:id};
   $('edit-name').value=item.n||''; $('edit-dates').value=item.dates||'';
-  $('edit-stage').value=validStage(item.stage); $('edit-person').value=item.person||'';
+  $('edit-stage').value=validStage(item.stage);
+  renderWhoPicker(cardWho(item));
   $('edit-modal').classList.add('open');
 }
 function closeEdit(){ $('edit-modal').classList.remove('open'); editTarget=null; }
+
+/* Tag as many people as needed. Each tagged person is who an email would
+   go to when the card changes. */
+function renderWhoPicker(selected){
+  const box=$('edit-who');
+  if(!people.length){ box.innerHTML='<span class="who-empty">No people yet — add them under "Stages &amp; people".</span>'; return; }
+  box.innerHTML=people.map(function(p){
+    const on=selected.indexOf(p.id)!==-1;
+    return '<label class="who-opt'+(on?' on':'')+'" data-id="'+esc(p.id)+'">'+
+      '<input type="checkbox"'+(on?' checked':'')+' /> '+esc(p.name)+'</label>';
+  }).join('');
+  box.querySelectorAll('.who-opt').forEach(function(l){
+    l.querySelector('input').addEventListener('change',function(e){
+      l.classList.toggle('on',e.target.checked);
+    });
+  });
+}
+function pickedWho(){
+  const out=[];
+  $('edit-who').querySelectorAll('.who-opt').forEach(function(l){
+    if(l.querySelector('input').checked) out.push(l.dataset.id);
+  });
+  return out;
+}
 function saveEdit(){
   if(!editTarget) return;
   const t=editTarget;
-  const v={n:$('edit-name').value.trim(),dates:$('edit-dates').value.trim(),stage:$('edit-stage').value,person:$('edit-person').value};
+  const v={n:$('edit-name').value.trim(),dates:$('edit-dates').value.trim(),stage:$('edit-stage').value,who:pickedWho()};
   closeEdit();
   mutate(function(){
     const list=t.type==='card'?cards:completed;
     const item=list.find(function(c){ return c.id==t.id; }); if(!item) return;
-    if(v.n) item.n=v.n; item.dates=v.dates; item.stage=v.stage; item.person=v.person;
+    if(v.n) item.n=v.n; item.dates=v.dates; item.stage=v.stage; item.who=v.who;
   });
 }
 
 // --- config ---
 function openConfig(){
   cfgStages=stages.map(function(s){ return {id:s.id,label:s.label}; });
-  cfgPeople=people.map(function(p){ return {id:p.id,name:p.name,color:p.color}; });
+  cfgPeople=people.map(function(p){ return {id:p.id,name:p.name,color:p.color,email:p.email||''}; });
   renderConfig(); $('config-modal').classList.add('open');
 }
 function closeConfig(){ $('config-modal').classList.remove('open'); }
@@ -653,8 +797,13 @@ function renderConfig(){
   $('cfg-people').innerHTML='';
   cfgPeople.forEach(function(p,i){
     const row=document.createElement('div'); row.className='cfg-row';
-    row.innerHTML='<span class="swatch" style="background:'+(p.color||PALETTE[i%PALETTE.length])+'"></span><input type="text" value="'+esc(p.name)+'" placeholder="Name" /><button type="button">Remove</button>';
-    row.querySelector('input').addEventListener('input',function(e){ p.name=e.target.value; });
+    row.innerHTML='<span class="swatch" style="background:'+(p.color||PALETTE[i%PALETTE.length])+'"></span>'+
+      '<input type="text" value="'+esc(p.name)+'" placeholder="Name" style="flex:1" />'+
+      '<input type="email" value="'+esc(p.email||'')+'" placeholder="Email (optional)" style="flex:1.3" />'+
+      '<button type="button">Remove</button>';
+    const fields=row.querySelectorAll('input');
+    fields[0].addEventListener('input',function(e){ p.name=e.target.value; });
+    fields[1].addEventListener('input',function(e){ p.email=e.target.value.trim(); });
     row.querySelector('button').addEventListener('click',function(){ cfgPeople=cfgPeople.filter(function(x){ return x!==p; }); renderConfig(); });
     $('cfg-people').appendChild(row);
   });
@@ -662,25 +811,33 @@ function renderConfig(){
 function saveConfig(){
   const ns=cfgStages.filter(function(s){ return s.label.trim(); }).map(function(s){ return {id:s.id||uid('s'),label:s.label.trim()}; });
   if(!ns.length){ showWarn('Keep at least one stage.'); return; }
-  const np=cfgPeople.filter(function(p){ return p.name.trim(); }).map(function(p,i){ return {id:p.id||uid('p'),name:p.name.trim(),color:p.color||PALETTE[i%PALETTE.length]}; });
+  const np=cfgPeople.filter(function(p){ return p.name.trim(); }).map(function(p,i){ return {id:p.id||uid('p'),name:p.name.trim(),color:p.color||PALETTE[i%PALETTE.length],email:(p.email||'').trim()}; });
   closeConfig();
   mutate(function(){
     stages=ns; people=np;
     const sIds={}; ns.forEach(function(s){ sIds[s.id]=1; });
     const pIds={}; np.forEach(function(p){ pIds[p.id]=1; });
-    cards.forEach(function(c){ if(!sIds[c.stage]) c.stage=ns[0].id; if(c.person&&!pIds[c.person]) c.person=''; });
-    completed.forEach(function(c){ if(c.person&&!pIds[c.person]) c.person=''; });
+    const prune=function(c){ c.who=cardWho(c).filter(function(id){ return pIds[id]; }); delete c.person; };
+    cards.forEach(function(c){ if(!sIds[c.stage]) c.stage=ns[0].id; prune(c); });
+    completed.forEach(prune);
+    removed.forEach(prune);
   });
 }
 
 // --- add ---
 function addProject(){
   const nameEl=$('new-name'); if(!nameEl) return;
-  const name=nameEl.value.trim(); if(!name){ nameEl.focus(); return; }
+  const name=nameEl.value.trim();
+  if(!name){
+    showWarn('Type a project name first, then press Add.');
+    setTimeout(clearWarn,2500);
+    nameEl.focus();
+    return;
+  }
   const dates=$('new-dates').value.trim();
   const person=$('new-person').value;
   nameEl.value=''; $('new-dates').value='';
-  mutate(function(){ cards.push({id:uid('c'),n:name,dates:dates,stage:stages[0]?stages[0].id:'',person:person}); });
+  mutate(function(){ cards.push({id:uid('c'),n:name,dates:dates,stage:stages[0]?stages[0].id:'',who:person?[person]:[]}); });
 }
 
 // --- import ---
@@ -694,7 +851,10 @@ function parseRows(text){
     const name=clean[0]; if(!name||/^(project|name|title)/i.test(name)) return;
     const start=clean[1]||'',end=clean[2]||'';
     const dates=start&&end?start+' – '+end:start||end||'';
-    out.push({n:name,dates:dates,person:byName[(clean[3]||'').toLowerCase()]||''});
+    /* "Assigned to" accepts several names separated by ; or / */
+    const whoIds=(clean[3]||'').split(/[;\/]/).map(function(x){ return byName[x.trim().toLowerCase()]; })
+      .filter(function(x){ return x; });
+    out.push({n:name,dates:dates,who:whoIds});
   });
   return out;
 }
@@ -709,19 +869,96 @@ function openImport(){ $('import-modal').classList.add('open'); }
 function closeImport(){ $('import-modal').classList.remove('open'); $('paste-area').value=''; }
 function readFile(file){ if(!file) return; const r=new FileReader(); r.onload=function(ev){ $('paste-area').value=ev.target.result; }; r.readAsText(file); }
 
+// --- download & restore ---
+function stamp(){
+  const d=new Date(), p=function(n){ return (n<10?'0':'')+n; };
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes());
+}
+function csvCell(v){
+  const t=String(v==null?'':v);
+  return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;
+}
+/* Column order matches what Import expects, so a downloaded CSV can be
+   loaded straight back in. */
+function boardCSV(){
+  const rows=[['Project name','Dates','','Assigned to','Stage','Status']];
+  cards.forEach(function(c){
+    const st=stageById(validStage(c.stage));
+    rows.push([c.n,c.dates||'','',whoNames(c),st?st.label:'','Active']);
+  });
+  completed.forEach(function(c){
+    rows.push([c.n,c.dates||'','',whoNames(c),'','Completed']);
+  });
+  removed.forEach(function(c){
+    rows.push([c.n,c.dates||'','',whoNames(c),'','Removed']);
+  });
+  return rows.map(function(r){ return r.map(csvCell).join(','); }).join('\n');
+}
+function boardJSON(){
+  return JSON.stringify({
+    format:'workflow-board', version:1, exportedAt:new Date().toISOString(),
+    stages:stages, people:people, cards:cards, completed:completed, removed:removed
+  },null,2);
+}
+function download(text,filename,mime){
+  try{
+    const blob=new Blob([text],{type:mime});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); },2000);
+  }catch(e){
+    showWarn('<strong>Download failed.</strong> '+esc(e.message||'Unknown error'));
+  }
+}
+function openExport(){
+  $('export-summary').innerHTML='<strong>'+cards.length+'</strong> active, <strong>'+completed.length+
+    '</strong> completed, <strong>'+removed.length+'</strong> removed.';
+  $('restore-area').value='';
+  $('export-modal').classList.add('open');
+}
+function closeExport(){ $('export-modal').classList.remove('open'); }
+
+function doRestore(){
+  const text=$('restore-area').value.trim();
+  if(!text){ showWarn('Paste a JSON backup first.'); return; }
+  let d;
+  try{ d=JSON.parse(text); }
+  catch(e){ showWarn('That is not valid JSON — make sure the whole file was pasted.'); return; }
+  if(!d||!Array.isArray(d.cards)||!Array.isArray(d.stages)){
+    showWarn('That file is missing the projects or stages, so it is not a board backup.'); return;
+  }
+  const when=d.exportedAt?new Date(d.exportedAt).toLocaleString():'an unknown date';
+  askConfirm('Replace the whole board?',
+    'This loads the backup from <strong>'+esc(when)+'</strong> ('+d.cards.length+' active) and discards everything currently on the board, for everyone.',
+    'Replace board',
+    function(){
+      closeExport();
+      mutate(function(){
+        cards=d.cards;
+        completed=Array.isArray(d.completed)?d.completed:[];
+        removed=Array.isArray(d.removed)?d.removed:[];
+        stages=d.stages.length?d.stages:DEFAULT_STAGES.slice();
+        people=Array.isArray(d.people)?d.people:[];
+      });
+      toast('Board restored from backup.');
+    });
+}
+
 // --- clipboard & context menu ---
 function cardById(id){ return cards.find(function(c){ return String(c.id)===String(id); })||null; }
 function copyCard(id){ const c=cardById(id); if(!c) return; clip=clone(c); toast('Copied "'+c.n+'".'); }
-function makeCopy(src,stage,person){
+function makeCopy(src,stage,who){
   const c=clone(src); c.id=uid('c');
   const m=c.n.match(/^(.*?)\s*\(copy(?:\s+(\d+))?\)\s*$/);
   c.n=m?(m[1]+' (copy '+((parseInt(m[2]||'1',10))+1)+')'):(c.n+' (copy)');
   c.stage=validStage(stage!==undefined?stage:c.stage);
-  if(person!==undefined) c.person=person;
-  delete c.completedAt; delete c.removedAt; return c;
+  c.who=who!==undefined?who.slice():cardWho(c);
+  delete c.person; delete c.completedAt; delete c.removedAt; return c;
 }
 function duplicateCard(id){ const c=cardById(id); if(!c) return; mutate(function(){ cards.push(makeCopy(c)); }); toast('Duplicated.'); }
-function pasteCard(stage,person){ if(!clip) return; mutate(function(){ cards.push(makeCopy(clip,stage,person)); }); toast('Pasted.'); }
+function pasteCard(stage,who){ if(!clip) return; mutate(function(){ cards.push(makeCopy(clip,stage,who)); }); toast('Pasted.'); }
 function selectCard(id){ selectedId=id; document.querySelectorAll('.card').forEach(function(el){ el.classList.toggle('sel',String(el.dataset.cardId)===String(id)); }); }
 function hideCtx(){ $('ctx-menu').classList.remove('open'); }
 function showCtx(x,y,items){
@@ -775,6 +1012,12 @@ $('config-save').addEventListener('click',saveConfig);
 $('add-stage').addEventListener('click',function(){ cfgStages.push({id:'',label:''}); renderConfig(); });
 $('add-person').addEventListener('click',function(){ cfgPeople.push({id:'',name:'',color:PALETTE[cfgPeople.length%PALETTE.length]}); renderConfig(); });
 $('open-import').addEventListener('click',openImport);
+$('open-export').addEventListener('click',openExport);
+$('export-close').addEventListener('click',closeExport);
+$('dl-csv').addEventListener('click',function(){ download(boardCSV(),'workflow-board-'+stamp()+'.csv','text/csv'); });
+$('dl-json').addEventListener('click',function(){ download(boardJSON(),'workflow-board-backup-'+stamp()+'.json','application/json'); });
+$('restore-go').addEventListener('click',doRestore);
+$('export-modal').addEventListener('click',function(e){ if(e.target===$('export-modal')) closeExport(); });
 $('import-cancel').addEventListener('click',closeImport);
 $('import-go').addEventListener('click',doImport);
 $('drop-zone').addEventListener('click',function(){ $('file-input').click(); });
@@ -802,10 +1045,11 @@ dz.addEventListener('dragleave',function(){ dz.style.background=''; });
 dz.addEventListener('drop',function(e){ e.preventDefault(); dz.style.background=''; readFile(e.dataTransfer.files[0]); });
 document.addEventListener('keydown',function(e){
   if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')) return;
-  if(e.key==='Escape'){ closeEdit(); closeConfig(); closeImport(); closeConfirm(); hideCtx(); }
+  if(e.key==='Escape'){ closeEdit(); closeConfig(); closeImport(); closeExport(); closeConfirm(); hideCtx(); }
   const meta=e.ctrlKey||e.metaKey;
   if(meta&&(e.key==='c'||e.key==='C')&&selectedId){ copyCard(selectedId); e.preventDefault(); }
   if(meta&&(e.key==='d'||e.key==='D')&&selectedId){ duplicateCard(selectedId); e.preventDefault(); }
+  if(meta&&(e.key==='v'||e.key==='V')&&clip){ pasteCard(); e.preventDefault(); }
 });
 
 init();
