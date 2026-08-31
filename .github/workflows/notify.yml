@@ -2,9 +2,9 @@ name: Board notifications
 
 on:
   schedule:
-    # Every 15 minutes. GitHub runs cron on a best-effort basis, so expect
+    # Every 60 minutes. GitHub runs cron on a best-effort basis, so expect
     # some drift, especially at busy times of the hour.
-    - cron: '*/15 * * * *'
+    - cron: '*/60 * * * *'
   workflow_dispatch:
     # Lets you run it by hand from the Actions tab, which is how to test it.
     inputs:
