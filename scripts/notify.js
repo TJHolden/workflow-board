@@ -181,7 +181,9 @@ function renderEmail(entry) {
 
 async function fetchBoard() {
   const r = await fetch('https://api.jsonbin.io/v3/b/' + BIN_ID + '/latest', {
-    headers: { 'X-Access-Key': JSONBIN_KEY, 'X-Master-Key': JSONBIN_KEY }
+    /* Access Key only — sending X-Master-Key too makes JSONBin validate it
+       as a master key and reject the request with a 401. */
+    headers: { 'X-Access-Key': JSONBIN_KEY }
   });
   if (!r.ok) {
     const body = await r.text().catch(() => '');
@@ -198,7 +200,9 @@ async function fetchBoard() {
 async function readState() {
   if (STATE_BIN_ID) {
     const r = await fetch('https://api.jsonbin.io/v3/b/' + STATE_BIN_ID + '/latest', {
-      headers: { 'X-Access-Key': JSONBIN_KEY, 'X-Master-Key': JSONBIN_KEY }
+      /* Access Key only — sending X-Master-Key too makes JSONBin validate it
+       as a master key and reject the request with a 401. */
+    headers: { 'X-Access-Key': JSONBIN_KEY }
     });
     if (!r.ok) {
       const body = await r.text().catch(() => '');
@@ -222,7 +226,6 @@ async function writeState(board) {
       method: 'PUT',
       headers: {
         'X-Access-Key': JSONBIN_KEY,
-        'X-Master-Key': JSONBIN_KEY,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ savedAt: new Date().toISOString(), board })
