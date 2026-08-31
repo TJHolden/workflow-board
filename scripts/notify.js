@@ -183,7 +183,13 @@ async function fetchBoard() {
   const r = await fetch('https://api.jsonbin.io/v3/b/' + BIN_ID + '/latest', {
     headers: { 'X-Access-Key': JSONBIN_KEY, 'X-Master-Key': JSONBIN_KEY }
   });
-  if (!r.ok) throw new Error('Could not read the board: HTTP ' + r.status);
+  if (!r.ok) {
+    const body = await r.text().catch(() => '');
+    throw new Error('Could not read the board (bin ' + BIN_ID + '): HTTP ' + r.status +
+      (r.status === 401 ? ' — the JSONBIN_KEY is wrong or has no access to this bin.' :
+       r.status === 404 ? ' — no bin with that ID.' : '') +
+      (body ? ' ' + body.slice(0, 200) : ''));
+  }
   const j = await r.json();
   return j.record || {};
 }
@@ -194,7 +200,12 @@ async function readState() {
     const r = await fetch('https://api.jsonbin.io/v3/b/' + STATE_BIN_ID + '/latest', {
       headers: { 'X-Access-Key': JSONBIN_KEY, 'X-Master-Key': JSONBIN_KEY }
     });
-    if (!r.ok) throw new Error('Could not read the state bin: HTTP ' + r.status);
+    if (!r.ok) {
+      const body = await r.text().catch(() => '');
+      throw new Error('Could not read the state bin (' + STATE_BIN_ID + '): HTTP ' + r.status +
+        (r.status === 404 ? ' — no bin with that ID.' : '') +
+        (body ? ' ' + body.slice(0, 200) : ''));
+    }
     const j = await r.json();
     const rec = j.record || {};
     return rec.board || null;
@@ -257,9 +268,30 @@ async function sendEmail(to, subject, html, text) {
   }
 }
 
+/* Print what the job can actually see before doing anything. Secrets are
+   shown only as present/absent and by length, never by value, so a wrong
+   paste is visible without exposing the credential. */
+function report() {
+  const mask = v => v ? ('set, ' + v.length + ' chars') : 'MISSING';
+  console.log('--- configuration ---');
+  console.log('BIN_ID:        ' + (BIN_ID || 'MISSING'));
+  console.log('STATE_BIN_ID:  ' + (STATE_BIN_ID || 'MISSING'));
+  console.log('BOARD_URL:     ' + (BOARD_URL || 'not set (optional)'));
+  console.log('JSONBIN_KEY:   ' + mask(JSONBIN_KEY));
+  console.log('SMTP_USER:     ' + (SMTP_USER || 'MISSING'));
+  console.log('SMTP_PASS:     ' + mask(SMTP_PASS));
+  console.log('MAIL_FROM:     ' + (MAIL_FROM || 'MISSING'));
+  console.log('DRY_RUN:       ' + (DRY_RUN ? 'yes' : 'no'));
+  if (MAIL_FROM && /secret|`|^"|"$/i.test(MAIL_FROM)) {
+    console.log('WARNING: MAIL_FROM looks like it has extra characters in it.');
+  }
+  console.log('---------------------');
+}
+
 async function main() {
+  report();
   if (!BIN_ID || !JSONBIN_KEY) {
-    console.error('BIN_ID and JSONBIN_KEY are required.');
+    console.error('STOP: BIN_ID and JSONBIN_KEY are both required. See the list above for which is missing.');
     process.exit(1);
   }
 
@@ -327,7 +359,12 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch(err => {
+    console.error('\n================ FAILED ================');
+    console.error(err && err.message ? err.message : String(err));
+    console.error('=======================================');
+    process.exit(1);
+  });
 }
 
 module.exports = { main, diffBoards, groupByPerson, renderEmail };
